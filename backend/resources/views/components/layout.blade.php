@@ -16,9 +16,8 @@
          <img src="{{ Vite::asset('resources/images/logo.png') }}" class="w-32" alt="Logo">
       </div>
       <ul class="space-y-2 w-full">
-         <li><a href="#" class="block hover:bg-gray-700 hover:text-white p-2 ">Dashboard</a></li>
-         <li><a href="#" class="block hover:bg-gray-700 hover:text-white p-2 ">Profile</a></li>
-         <li><a href="#" class="block hover:bg-gray-700 hover:text-white p-2 ">Settings</a></li>
+         <x-sidebar-link route="admin.dashboard">Dashboard</x-sidebar-link>
+         {{-- <x-sidebar-link route="admin.settings">Settings</x-sidebar-link> --}}
       </ul>
    </nav>
    <main class="w-5/6">

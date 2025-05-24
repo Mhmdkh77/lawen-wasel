@@ -17,7 +17,8 @@ return new class extends Migration
             $table->timestamps();
             $table->foreignIdFor(User::class, 'driver_id')->constrained()->cascadeOnDelete();;
             $table->string('plate_number')->unique();
-            $table->string('brand', 50);
+            $table->string('type', 50);
+            $table->string('model', 50);
             $table->string('color', 50);
             $table->unsignedTinyInteger('capacity');
         });

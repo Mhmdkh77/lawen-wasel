@@ -6,6 +6,7 @@ use App\Models\Vehicle;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use phpDocumentor\Reflection\Types\Nullable;
 
 return new class extends Migration
 {
@@ -17,10 +18,12 @@ return new class extends Migration
         Schema::create('rides', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->foreignIdFor(User::class, 'driver_id');
-            $table->foreignIdFor(Route::class);
-            $table->foreignIdFor(Vehicle::class);
-            $table->enum('status', ['pending', 'accepted', 'active', 'rejected', 'completed'])->default('pending');
+            $table->foreignIdFor(User::class, 'driver_id')->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(Route::class, 'first_route')->constrained()->restrictOnDelete();
+            // $table->foreignIdFor(Route::class, 'second_route')->nullable()->constrained()->restrictOnDelete();
+            $table->foreignIdFor(Vehicle::class)->constrained()->restrictOnDelete();
+            $table->enum('status', ['pending', 'active',  'completed'])->default('pending');
+            // $table->enum('type', ['round_trip', 'one_way'])->default('round_trip');
         });
     }
 
