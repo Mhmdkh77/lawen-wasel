@@ -9,4 +9,11 @@ class Station extends Model
 {
     /** @use HasFactory<\Database\Factories\StationFactory> */
     use HasFactory;
+
+    protected $fillable = ['name', 'latitude', 'longitude'];
+
+    public function nodes()
+    {
+        return $this->hasMany(Node::class);
+    }
 }
