@@ -10,7 +10,7 @@ class Station extends Model
     /** @use HasFactory<\Database\Factories\StationFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'latitude', 'longitude'];
+    protected $guarded = [];
 
     public function nodes()
     {

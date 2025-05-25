@@ -17,13 +17,15 @@ return new class extends Migration
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->foreignIdFor(Ride::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(Ride::class, "first_ride_id")->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(Ride::class, 'second_ride_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignIdFor(User::class, 'passenger_id');
             $table->enum('status', ['pending', 'accepted', 'canceled', 'rejected'])->default('pending');
             $table->unsignedInteger('nb_seats')->default(1);
             $table->dateTime('booking_time');
-            $table->enum('type', ['round_trip', 'one_way'])->default('round_trip');
+            $table->enum('type', ['round_trip', 'one_way'])->default('one_way');
             $table->decimal('price', 10, 2);
+            $table->check('first_ride != second_ride');
         });
     }
 

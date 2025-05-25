@@ -10,7 +10,7 @@ class Rating extends Model
     /** @use HasFactory<\Database\Factories\RatingFactory> */
     use HasFactory;
 
-    protected $fillable = ['rated_user_id', 'rating_user_id', 'ride_id', 'rating', 'review_text'];
+    protected $guarded = [];
 
     public function ratedUser()
     {

@@ -17,7 +17,9 @@ class StationFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name' => fake()->city(),
+            'latitude' => fake()->latitude(),
+            'longitude' => fake()->longitude(),
         ];
     }
 }
