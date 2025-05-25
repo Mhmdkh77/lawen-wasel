@@ -19,11 +19,9 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->foreignIdFor(User::class, 'driver_id')->constrained()->cascadeOnDelete();
-            $table->foreignIdFor(Route::class, 'first_route')->constrained()->restrictOnDelete();
-            // $table->foreignIdFor(Route::class, 'second_route')->nullable()->constrained()->restrictOnDelete();
-            $table->foreignIdFor(Vehicle::class)->constrained()->restrictOnDelete();
+            $table->foreignIdFor(Route::class, 'route')->constrained()->restrictOnDelete();
+            $table->foreignIdFor(Vehicle::class);
             $table->enum('status', ['pending', 'active',  'completed'])->default('pending');
-            // $table->enum('type', ['round_trip', 'one_way'])->default('round_trip');
         });
     }
 

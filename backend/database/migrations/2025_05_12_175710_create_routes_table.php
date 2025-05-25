@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->dateTime('start_time');
-            $table->dateTime('end_time');
+            $table->dateTime('finish_time');
             $table->decimal('destination_latitude', 10, 8);
             $table->decimal('destination_longitude', 11, 8);
             $table->decimal('start_latitude', 10, 8);
