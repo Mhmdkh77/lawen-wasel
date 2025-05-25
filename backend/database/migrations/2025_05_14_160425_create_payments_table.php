@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
             $table->foreignIdFor(User::class, 'passenger_id')->constrained();
             $table->foreignIdFor(Ride::class)->constrained()->cascadeOnDelete();;
-            $table->decimal('price', 10, 2);
+            $table->decimal('total', 10, 2);
             $table->foreignIdFor(PaymentMethod::class);
         });
     }

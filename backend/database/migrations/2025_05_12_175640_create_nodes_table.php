@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('longitude', 11, 8);
             $table->foreignIdFor(Station::class)->nullable()->constrained()->restrictOnDelete();
             $table->foreignIdFor(Route::class)->constrained()->cascadeOnDelete();
-            $table->dateTime('arrival_time');
+            $table->dateTime('scheduled_time');
         });
     }
 
