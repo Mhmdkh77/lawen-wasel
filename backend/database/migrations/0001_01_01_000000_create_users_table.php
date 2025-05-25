@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->enum('type', ['passenger', 'driver']);
             $table->enum('gender', ['male', 'female'])->nullable();
-            $table->string('driver_lic')->nullable();
+            $table->string('driver_license')->nullable();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

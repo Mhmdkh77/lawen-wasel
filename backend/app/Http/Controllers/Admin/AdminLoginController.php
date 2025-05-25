@@ -6,9 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+
 class AdminLoginController extends Controller
 {
-     public function create()
+    public function create()
     {
         return view('login.index');
     }

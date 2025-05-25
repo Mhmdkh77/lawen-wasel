@@ -10,21 +10,11 @@ class Route extends Model
     /** @use HasFactory<\Database\Factories\RouteFactory> */
     use HasFactory;
 
-    protected $fillable = [
-        'start_time',
-        'end_time',
-        'start_latitude',
-        'start_longitude',
-        'destination_latitude',
-        'destination_longitude',
-        'distance_km',
-        'duration_minutes',
-        'price'
-    ];
+    protected $guarded = [];
 
-    public function rides()
+    public function ride()
     {
-        return $this->hasMany(Ride::class, 'first_route');
+        return $this->hasOne(Ride::class);
     }
 
     public function nodes()

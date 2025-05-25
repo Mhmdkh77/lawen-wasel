@@ -21,6 +21,7 @@ return new class extends Migration
             $table->foreignIdFor(Station::class)->nullable()->constrained()->restrictOnDelete();
             $table->foreignIdFor(Route::class)->constrained()->cascadeOnDelete();
             $table->dateTime('scheduled_time');
+            $table->unique(['latitude', 'longitude', 'route_id']);
         });
     }
 

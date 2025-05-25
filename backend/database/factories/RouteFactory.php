@@ -16,8 +16,18 @@ class RouteFactory extends Factory
      */
     public function definition(): array
     {
+        $startTime = $this->faker->dateTimeBetween('+0 days', '+1 week');
+        $duration = $this->faker->numberBetween(10, 120);
+
         return [
-            //
+            'start_time' => $startTime,
+            'finish_time' => (clone $startTime)->modify("+$duration minutes"),
+            'start_latitude' => $this->faker->latitude,
+            'start_longitude' => $this->faker->longitude,
+            'destination_latitude' => $this->faker->latitude,
+            'destination_longitude' => $this->faker->longitude,
+            'distance_km' => $this->faker->randomFloat(2, 1, 100), // up to 2 decimals
+            'duration_minutes' => $duration,
         ];
     }
 }

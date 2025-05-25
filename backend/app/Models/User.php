@@ -20,7 +20,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'user_name',
+        'name',
         'email',
         'password',
         'phone',
@@ -51,6 +51,16 @@ class User extends Authenticatable
         ];
     }
 
+    public function scopeDrivers($query)
+    {
+        return $query->where('type', 'driver');
+    }
+
+    public function scopePassengers($query)
+    {
+        return $query->where('type', 'passenger');
+    }
+
     public function isPassenger(): bool
     {
         return $this->type === 'passenger';
@@ -59,11 +69,6 @@ class User extends Authenticatable
     public function isDriver(): bool
     {
         return $this->type === 'driver';
-    }
-
-    public function isAdmin(): bool
-    {
-        return $this->type === 'admin';
     }
 
     public function vehicles()

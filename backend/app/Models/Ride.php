@@ -11,13 +11,17 @@ class Ride extends Model
     /** @use HasFactory<\Database\Factories\RideFactory> */
     use HasFactory;
 
-    protected $fillable = [
-        'driver_id',
-        'first_route',
-        'vehicle_id',
-        'status',
-        'type'
-    ];
+    protected $guarded = [];
+
+    public function scopeWithOpenSeats($query)
+    {
+        return $query->whereHas('vehicle')
+            ->whereHas('bookings', function ($q) {
+                $q->selectRaw('ride_id, SUM(nb_seats) as booked_seats')
+                    ->groupBy('ride_id')
+                    ->havingRaw('SUM(nb_seats) < (select capacity from vehicles where vehicles.id = rides.vehicle_id)');
+            });
+    }
 
     public function driver()
     {
@@ -26,7 +30,7 @@ class Ride extends Model
 
     public function route()
     {
-        return $this->belongsTo(Route::class, 'first_route');
+        return $this->belongsTo(Route::class);
     }
 
     public function vehicle()
@@ -44,8 +48,26 @@ class Ride extends Model
         return $this->hasMany(Rating::class);
     }
 
-    public function payments()
+    public function passengers()
     {
-        return $this->hasMany(Payment::class);
+        $route = $this->route()->with('nodes.passengers')->first();
+
+        if (!$route) {
+            return collect();
+        }
+
+        return $route->nodes->flatMap(fn($node) => $node->passengers)->unique('id');
+    }
+
+    public function acceptedBookings()
+    {
+        return $this->hasMany(Booking::class)->where('status', 'accepted');
+    }
+    public function availableSeats(): int
+    {
+        $bookedSeats = $this->acceptedBookings()->sum('nb_seats');
+        $capacity = $this->vehicle?->capacity ?? 0;
+
+        return max($capacity - $bookedSeats, 0);
     }
 }

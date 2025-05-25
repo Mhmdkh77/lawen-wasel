@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
             $table->foreignIdFor(Node::class);
             $table->foreignIdFor(User::class, 'passenger_id')->constrained()->cascadeOnDelete();
-            $table->foreignIdFor(Booking::class)->constrained()->cascadeOnDelete();
+            $table->unique(['node_id', 'passenger_id']);
         });
     }
 

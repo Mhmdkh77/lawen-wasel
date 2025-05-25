@@ -10,20 +10,18 @@ class Booking extends Model
     /** @use HasFactory<\Database\Factories\BookingFactory> */
     use HasFactory;
 
-    protected $fillable = ['ride_id', 'passenger_id', 'status', 'nb_seats', 'booking_time', 'type'];
-
-    public function ride()
+    protected $guarded = [];
+    public function firstRide()
     {
-        return $this->belongsTo(Ride::class);
+        return $this->belongsTo(Ride::class, 'first_ride_id');
     }
 
+    public function secondRide()
+    {
+        return $this->belongsTo(Ride::class, 'second_ride_id');
+    }
     public function passenger()
     {
         return $this->belongsTo(User::class, 'passenger_id');
-    }
-
-    public function nodes()
-    {
-        return $this->belongsToMany(Node::class, 'node_passenger');
     }
 }
