@@ -1,12 +1,11 @@
 <?php
 
-use App\Models\Route;
+use App\Models\Location;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use phpDocumentor\Reflection\Types\Nullable;
 
 return new class extends Migration
 {
@@ -19,8 +18,11 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->foreignIdFor(User::class, 'driver_id')->constrained()->cascadeOnDelete();
-            $table->foreignIdFor(Route::class, 'route')->constrained()->restrictOnDelete();
             $table->foreignIdFor(Vehicle::class);
+            $table->dateTime('start_time');
+            $table->dateTime('finish_time');
+            $table->dateTime('arrival_time');
+            $table->unsignedInteger("booked_seats");
             $table->enum('status', ['pending', 'active',  'completed'])->default('pending');
         });
     }

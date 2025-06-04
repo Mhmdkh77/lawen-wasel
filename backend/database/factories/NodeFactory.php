@@ -24,7 +24,7 @@ class NodeFactory extends Factory
             'latitude' => fake()->latitude(),
             'longitude' => fake()->longitude(),
             'route_id' => $route->id,
-            'scheduled_time' => fake()->dateTimeBetween($route->start_time, $route->finish_time),
+            'scheduled_time' => fake()->dateTimeBetween($route->start_time, $route->finish_time),   
         ];
     }
 

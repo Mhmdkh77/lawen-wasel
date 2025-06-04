@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\BookingGroup;
+use App\Models\Node;
 use App\Models\Ride;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,19 +22,21 @@ class BookingFactory extends Factory
 
     public function definition(): array
     {
-        $firstRide = Ride::withOpenSeats()->inRandomOrder()->first();
+        $ride = Ride::withOpenSeats()->inRandomOrder()->first();
 
-        $passengers = $firstRide->passengers()->pluck('id');
+        $passengers = $ride->passengers()->pluck('id');
 
         $passenger = User::passengers()->whereNotIn('id', $passengers)->inRandomOrder()->first();
 
-        $status = in_array($firstRide->status, ['pending'])
+        $status = in_array($ride->status, ['pending'])
             ? ['pending', 'accepted', 'canceled', 'rejected']
             : ['accepted', 'canceled', 'rejected'];
 
         return [
-            'first_ride_id' => $firstRide->id,
+            'ride_id' => $ride->id,
             'passenger_id' => $passenger->id,
+            'booking_group_id' => BookingGroup::create(),
+            'node_id' => Node::factory(),
             'status' => fake()->randomElement($status),
             'nb_seats' => 1,
             'booking_time' => fake()->dateTimeBetween('-1 week', now()),
@@ -41,19 +45,19 @@ class BookingFactory extends Factory
         ];
     }
 
-    public function roundTrip(): static
-    {
-        $firstRide = Ride::withOpenSeats()->inRandomOrder()->first();
-        $secondRide = Ride::withOpenSeats()->where('id', '!=', $firstRide->id)->inRandomOrder()->first();
-        $passengers = $firstRide->passengers()->pluck('id');
-        $passengers = $passengers->merge($secondRide->passengers()->pluck('id'));
-        $passenger = User::passengers()->whereNotIn('id', $passengers)->inRandomOrder()->first();
+    // public function roundTrip(): static
+    // {
+    //     $firstRide = Ride::withOpenSeats()->inRandomOrder()->first();
+    //     $secondRide = Ride::withOpenSeats()->where('id', '!=', $firstRide->id)->inRandomOrder()->first();
+    //     $passengers = $firstRide->passengers()->pluck('id');
+    //     $passengers = $passengers->merge($secondRide->passengers()->pluck('id'));
+    //     $passenger = User::passengers()->whereNotIn('id', $passengers)->inRandomOrder()->first();
 
-        return $this->state(fn(array $attributes) => [
-            'first_ride_id' => $firstRide->id,
-            'second_ride_id' => $secondRide->id,
-            'passenger_id' => $passenger->id,
-            'type' => 'round_trip',
-        ]);
-    }
+    //     return $this->state(fn(array $attributes) => [
+    //         'first_ride_id' => $firstRide->id,
+    //         'second_ride_id' => $secondRide->id,
+    //         'passenger_id' => $passenger->id,
+    //         'type' => 'round_trip',
+    //     ]);
+    // }
 }

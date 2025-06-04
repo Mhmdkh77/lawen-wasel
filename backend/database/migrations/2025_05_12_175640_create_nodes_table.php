@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Route;
-use App\Models\Station;
+use App\Models\Location;
+use App\Models\Ride;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -16,12 +16,12 @@ return new class extends Migration
         Schema::create('nodes', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
+            $table->foreignIdFor(Ride::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(Location::class)->nullable()->constrained()->restrictOnDelete();
             $table->decimal('latitude', 10, 8);
             $table->decimal('longitude', 11, 8);
-            $table->foreignIdFor(Station::class)->nullable()->constrained()->restrictOnDelete();
-            $table->foreignIdFor(Route::class)->constrained()->cascadeOnDelete();
-            $table->dateTime('scheduled_time');
-            $table->unique(['latitude', 'longitude', 'route_id']);
+            $table->enum('type', ['pickup', 'dropoff']);
+            $table->unique(['latitude', 'longitude', 'ride_id']);
         });
     }
 

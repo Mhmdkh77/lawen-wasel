@@ -23,7 +23,7 @@ class VehicleFactory extends Factory
             'type' => $this->faker->randomElement(['Sedan', 'SUV', 'Truck', 'Van', 'Coupe']),
             'model' => $this->faker->word(),
             'color' => $this->faker->safeColorName(),
-            'capacity' => $this->faker->numberBetween(1, 8),
+            'capacity' => $this->faker->numberBetween(5, 15),
         ];
     }
 }
