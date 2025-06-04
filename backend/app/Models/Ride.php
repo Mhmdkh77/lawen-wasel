@@ -5,6 +5,7 @@ namespace App\Models;
 use Faker\Provider\ar_EG\Payment;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Ride extends Model
 {
@@ -16,12 +17,21 @@ class Ride extends Model
     public function scopeWithOpenSeats($query)
     {
         return $query->whereHas('vehicle')
-            ->whereHas('bookings', function ($q) {
-                $q->selectRaw('ride_id, SUM(nb_seats) as booked_seats')
-                    ->groupBy('ride_id')
-                    ->havingRaw('SUM(nb_seats) < (select capacity from vehicles where vehicles.id = rides.vehicle_id)');
-            });
+            ->whereRaw("
+            (select COALESCE(SUM(nb_seats), 0) 
+             from bookings 
+             where bookings.ride_id = rides.id 
+               and bookings.status = 'accepted') < 
+            (select capacity from vehicles where vehicles.id = rides.vehicle_id)
+        ");
     }
+
+    // public function scopeWithOpenSeats($query)
+    // {
+    //     return $query->whereHas('vehicle', function ($q) {
+    //         $q->whereColumn('rides.booked_seats', '<', 'vehicles.capacity');
+    //     });
+    // }
 
     public function driver()
     {
@@ -63,6 +73,7 @@ class Ride extends Model
     {
         return $this->hasMany(Booking::class)->where('status', 'accepted');
     }
+
     public function availableSeats(): int
     {
         $bookedSeats = $this->acceptedBookings()->sum('nb_seats');

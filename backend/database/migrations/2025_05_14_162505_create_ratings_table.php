@@ -21,6 +21,7 @@ return new class extends Migration
             $table->foreignIdFor(Ride::class)->constrained()->cascadeOnDelete();
             $table->unsignedTinyInteger('rating')->check('rating >= 1 AND rating <= 5');
             $table->text("review_text")->nullable();
+            $table->unique(columns: ['rated_user_id', 'rating_user_id', 'ride_id']);
         });
     }
 

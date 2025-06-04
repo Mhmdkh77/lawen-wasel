@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Location;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Database\Migrations\Migration;
@@ -14,16 +13,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('rides', function (Blueprint $table) {
+        Schema::create('ride_template', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
             $table->foreignIdFor(User::class, 'driver_id')->constrained()->cascadeOnDelete();
             $table->foreignIdFor(Vehicle::class);
-            $table->dateTime('start_time');
-            $table->dateTime('finish_time');
             $table->dateTime('arrival_time');
-            $table->unsignedInteger("booked_seats");
-            $table->enum('status', ['pending', 'active',  'completed'])->default('pending');
         });
     }
 
@@ -32,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('rides');
+        Schema::dropIfExists('ride_template');
     }
 };

@@ -1,7 +1,5 @@
 <?php
 
-use App\Models\Location;
-use App\Models\Ride;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,15 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('nodes', function (Blueprint $table) {
+        Schema::create('locations', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->foreignIdFor(Ride::class)->constrained()->cascadeOnDelete();
-            $table->foreignIdFor(Location::class)->nullable()->constrained()->restrictOnDelete();
+            $table->string('name');
+            $table->enum('type', ['city', 'station', 'institution']);
             $table->decimal('latitude', 10, 8);
             $table->decimal('longitude', 11, 8);
-            $table->enum('type', ['pickup', 'dropoff']);
-            $table->unique(['latitude', 'longitude', 'ride_id']);
+            $table->unique(['latitude', 'longitude']);
         });
     }
 
@@ -30,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('nodes');
+        Schema::dropIfExists('locations');
     }
 };
