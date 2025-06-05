@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Location;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Database\Migrations\Migration;
@@ -22,7 +21,7 @@ return new class extends Migration
             $table->dateTime('start_time');
             $table->dateTime('finish_time');
             $table->dateTime('arrival_time');
-            $table->unsignedInteger("booked_seats");
+            $table->unsignedInteger("booked_seats")->default(0);
             $table->enum('status', ['pending', 'active',  'completed'])->default('pending');
         });
     }

@@ -20,13 +20,14 @@ return new class extends Migration
             $table->timestamps();
             $table->foreignIdFor(Ride::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(BookingGroup::class)->constrained()->cascadeOnDelete();
-            $table->foreignIdFor(Node::class)->constrained()->restrictOnDelete();
+            $table->foreignIdFor(Node::class)->nullable()->constrained()->restrictOnDelete();
             $table->foreignIdFor(User::class, 'passenger_id');
             $table->enum('status', ['pending', 'accepted', 'canceled', 'rejected'])->default('pending');
             $table->unsignedInteger('nb_seats')->default(1);
             $table->dateTime('arrival_time');
             $table->enum('type', ['round_trip', 'one_way'])->default('one_way');
             $table->decimal('price', 10, 2);
+            $table->unique(['ride_id', 'passenger_id']);
         });
     }
 
