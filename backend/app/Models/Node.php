@@ -12,18 +12,4 @@ class Node extends Model
 
     protected $guarded = [];
 
-    public function station()
-    {
-        return $this->belongsTo(Station::class);
-    }
-
-    public function route()
-    {
-        return $this->belongsTo(Route::class);
-    }
-
-    public function passengers()
-    {
-        return $this->belongsToMany(User::class, 'node_passenger', 'node_id', 'passenger_id');
-    }
 }

@@ -21,6 +21,8 @@ return new class extends Migration
             $table->enum('role', ['passenger', 'driver']);
             $table->enum('gender', ['male', 'female'])->nullable();
             $table->string('driver_license')->nullable();
+            $table->decimal('latitude', 10, 8);
+            $table->decimal('longitude', 11, 8);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

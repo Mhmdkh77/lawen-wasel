@@ -18,12 +18,12 @@ class VehicleFactory extends Factory
     public function definition(): array
     {
         return [
-            'driver_id' => User::drivers()->inRandomOrder()->value('id'),
+            'driver_id' => User::factory()->driver()->create(),
             'plate_number' => strtoupper($this->faker->bothify('??###??')),
             'type' => $this->faker->randomElement(['Sedan', 'SUV', 'Truck', 'Van', 'Coupe']),
             'model' => $this->faker->word(),
             'color' => $this->faker->safeColorName(),
-            'capacity' => $this->faker->numberBetween(5, 15),
+            'capacity' => $this->faker->numberBetween(10, 15),
         ];
     }
 }

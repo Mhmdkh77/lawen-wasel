@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Booking;
 use App\Models\BookingGroup;
 use App\Models\Node;
 use App\Models\Ride;
@@ -22,42 +23,66 @@ class BookingFactory extends Factory
 
     public function definition(): array
     {
-        $ride = Ride::withOpenSeats()->inRandomOrder()->first();
 
-        $passengers = $ride->passengers()->pluck('id');
+        $ride = Ride::withOpenSeats()->inRandomOrder()->first(); // Get random ride with open seats
 
-        $passenger = User::passengers()->whereNotIn('id', $passengers)->inRandomOrder()->first();
 
+        if (!$ride) {
+            throw new \Exception('No rides with open seats available');
+        }
+
+        $ride->refresh();
+
+        // Lock the row to prevent concurrent modifications
+        $ride = Ride::where('id', $ride->id)->lockForUpdate()->first();
+
+        $passenger = User::whereDoesntHave('bookings', function ($query) use ($ride) {
+            $query->where('ride_id', $ride->id);
+        })->inRandomOrder()->first();
+
+        if (!$passenger) {
+            throw new \Exception('No available passengers for this ride');
+        }
+
+
+        $ride->increment('booked_seats');
+
+
+        $city = $ride->locations()->cities()->inRandomOrder()->first();
+
+
+
+        // Get status of the booking options
         $status = in_array($ride->status, ['pending'])
-            ? ['pending', 'accepted', 'canceled', 'rejected']
-            : ['accepted', 'canceled', 'rejected'];
+            ? ['pending', 'accepted']
+            : ['accepted'];
+
 
         return [
             'ride_id' => $ride->id,
+            'booking_group_id' => BookingGroup::create([
+                'passenger_id' => $passenger->id
+            ])->id,
+            'node_id' => Node::factory()->create([
+                'ride_id' => $ride->id,
+                'type' => 'pickup',
+                'latitude' => $city->latitude + fake()->randomFloat(6, -0.002, 0.002),
+                'longitude' => $city->longitude + fake()->randomFloat(6, -0.002, 0.002),
+            ]),
             'passenger_id' => $passenger->id,
-            'booking_group_id' => BookingGroup::create(),
-            'node_id' => Node::factory(),
             'status' => fake()->randomElement($status),
             'nb_seats' => 1,
-            'booking_time' => fake()->dateTimeBetween('-1 week', now()),
+            'arrival_time' =>  $ride->arrival_time,
             'type' => 'one_way',
             'price' => fake()->numberBetween(10, 100)
         ];
     }
 
-    // public function roundTrip(): static
-    // {
-    //     $firstRide = Ride::withOpenSeats()->inRandomOrder()->first();
-    //     $secondRide = Ride::withOpenSeats()->where('id', '!=', $firstRide->id)->inRandomOrder()->first();
-    //     $passengers = $firstRide->passengers()->pluck('id');
-    //     $passengers = $passengers->merge($secondRide->passengers()->pluck('id'));
-    //     $passenger = User::passengers()->whereNotIn('id', $passengers)->inRandomOrder()->first();
-
-    //     return $this->state(fn(array $attributes) => [
-    //         'first_ride_id' => $firstRide->id,
-    //         'second_ride_id' => $secondRide->id,
-    //         'passenger_id' => $passenger->id,
-    //         'type' => 'round_trip',
-    //     ]);
-    // }
+    public function canceledOrRejeceted()
+    {
+        return $this->state(fn(array $attributes) => [
+            'node_id' => null,
+            'status' => fake()->randomElement(['canceled', 'rejected'])
+        ]);
+    }
 }

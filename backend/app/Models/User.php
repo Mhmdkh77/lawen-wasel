@@ -53,12 +53,12 @@ class User extends Authenticatable
 
     public function scopeDrivers($query)
     {
-        return $query->where('type', 'driver');
+        return $query->where('role', 'driver');
     }
 
     public function scopePassengers($query)
     {
-        return $query->where('type', 'passenger');
+        return $query->where('role', 'passenger');
     }
 
     public function isPassenger(): bool
@@ -96,8 +96,5 @@ class User extends Authenticatable
         return $this->hasMany(Rating::class, 'rated_user_id');
     }
 
-    public function payments()
-    {
-        return $this->hasMany(Payment::class, 'passenger_id');
-    }
+
 }

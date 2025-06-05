@@ -30,8 +30,10 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('pass'),
             'remember_token' => Str::random(10),
             'phone' => fake()->phoneNumber(),
-            'type' => 'passenger',
+            'role' => 'passenger',
             'gender' => fake()->randomElement(['male', 'female']),
+            'latitude' => $this->faker->randomFloat(6, 33.05, 34.7),
+            'longitude' => $this->faker->randomFloat(6, 35.1, 36.6),
         ];
     }
 
@@ -48,7 +50,7 @@ class UserFactory extends Factory
     public function driver(): static
     {
         return $this->state(fn(array $attributes) => [
-            'type' => 'driver',
+            'role' => 'driver',
             'driver_license' => strtoupper(Str::random(10)),
         ]);
     }

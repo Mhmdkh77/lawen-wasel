@@ -20,19 +20,21 @@ class RatingFactory extends Factory
 
     public function definition(): array
     {
-        $ride = Ride::inRandomOrder()->first();
-        $driver = $ride->driver_id;
-        $passengers = $ride->passengers()->pluck('id');
+        $ride = Ride::where('status', '=', 'completed')->inRandomOrder()->first(); // Get random ride
+        $driver = $ride->driver_id; // Get ride driver
+        $passengers = $ride->passengers()->pluck('users.id')->toArray(); // Get ride passengers
 
-        $passenger = User::whereIn('id', $passengers)->whereNotIn('id', function ($query) use ($driver) {
+        // get passenger that did not rate before
+        $passenger = User::whereIn('id', $passengers)->whereNotIn('id', function ($query) use ($driver, $ride) {
             $query->select('rating_user_id')
                 ->from('ratings')
-                ->where('rated_user_id', $driver);
+                ->where('rated_user_id', $driver)
+                ->where('ride_id', $ride->id);
         })->inRandomOrder()->first();
 
         return [
             'rated_user_id' => $driver,
-            'rating_user_id' => $passenger,
+            'rating_user_id' => $passenger->id,
             'ride_id' => $ride->id,
             'rating' => fake()->numberBetween(0, 5),
             'review_text' => fake()->realText()
