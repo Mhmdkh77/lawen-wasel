@@ -60,29 +60,15 @@ class RideController extends Controller
             ])->post('https://api.openrouteservice.org/optimization', $payload);
 
             $data = $response->json();
-
             $optimizedRoute = $data['routes'][0] ?? null;
+            $orderedWaypoints = collect($optimizedRoute['steps'])->map(function ($step) {
+                return ['lat' => $step['location'][1], 'lng' => $step['location'][0]];
+            })->unique(fn($item) => $item['lat'] . ',' . $item['lng'])->values()->toArray();
 
 
-            $coordinates = collect($optimizedRoute['steps'])
-                ->pluck('location')
-                ->values()
-                ->toArray();
-            $directionsUrl = "https://api.openrouteservice.org/v2/directions/driving-car?api_key=" . env('ORS_API_KEY');
-
-            $directionsResponse = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post($directionsUrl, [
-                'coordinates' => $coordinates // [[lng, lat], [lng, lat], ...]
-            ]);
-
-            $geometry = optional($directionsResponse->json())['routes'][0]['geometry'] ?? [];
             return view('rides.show', [
                 'ride' => $ride,
-                'geometry' => $geometry,  // encoded polyline string from ORS directions
-                'orderedWaypoints' => collect($optimizedRoute['steps'])->map(function ($step) {
-                    return ['lat' => $step['location'][1], 'lng' => $step['location'][0]];
-                })->values()->toArray(),
+                'orderedWaypoints' => $orderedWaypoints,
             ]);
         } catch (\Exception $e) {
             // Catch all exceptions for comprehensive logging
