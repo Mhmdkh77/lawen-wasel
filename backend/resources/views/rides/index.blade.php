@@ -1,1 +1,3 @@
-<x-layout></x-layout>
+<x-layout>
+   <livewire:rides-index role='passenger' />
+</x-layout>

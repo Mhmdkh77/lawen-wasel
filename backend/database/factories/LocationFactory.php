@@ -22,8 +22,8 @@ class LocationFactory extends Factory
         return [
             'name' => $city->name . 'Station',
             'type' => 'station',
-            'latitude' => $city->latitude + fake()->randomFloat(6, -0.002, 0.002),
-            'longitude' => $city->longitude + fake()->randomFloat(6, -0.002, 0.002),
+            'latitude' => $city->latitude + fake()->randomFloat(6, -0.0002, 0.0002),
+            'longitude' => $city->longitude + fake()->randomFloat(6, -0.0002, 0.0002),
             'city_id' => $city->id
         ];
     }

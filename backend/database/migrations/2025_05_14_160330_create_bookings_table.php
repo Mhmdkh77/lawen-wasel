@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\BookingGroup;
+use App\Models\Location;
 use App\Models\Node;
 use App\Models\Ride;
 use App\Models\User;
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->foreignIdFor(BookingGroup::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(Node::class)->nullable()->constrained()->restrictOnDelete();
             $table->foreignIdFor(User::class, 'passenger_id');
+            $table->foreignIdFor(Location::class, 'destination_id');
             $table->enum('status', ['pending', 'accepted', 'canceled', 'rejected'])->default('pending');
             $table->unsignedInteger('nb_seats')->default(1);
             $table->dateTime('arrival_time');

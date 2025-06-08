@@ -12,4 +12,18 @@ class Node extends Model
 
     protected $guarded = [];
 
+    public function scopePickup($query)
+    {
+        return $query->where('type', 'pickup');
+    }
+
+    public function scopeDropoff($query)
+    {
+        return $query->where('type', 'dropoff');
+    }
+
+    public function destination()
+    {
+        return $this->belongsTo(Location::class, 'destination_id');
+    }
 }

@@ -50,7 +50,7 @@ class BookingFactory extends Factory
 
         $city = $ride->locations()->cities()->inRandomOrder()->first();
 
-
+        $destination = $ride->locations()->institutions()->inRandomOrder()->value('locations.id');
 
         // Get status of the booking options
         $status = in_array($ride->status, ['pending'])
@@ -66,9 +66,11 @@ class BookingFactory extends Factory
             'node_id' => Node::factory()->create([
                 'ride_id' => $ride->id,
                 'type' => 'pickup',
-                'latitude' => $city->latitude + fake()->randomFloat(6, -0.002, 0.002),
-                'longitude' => $city->longitude + fake()->randomFloat(6, -0.002, 0.002),
+                'latitude' => $city->latitude + fake()->randomFloat(6, -0.0002, 0.0002),
+                'longitude' => $city->longitude + fake()->randomFloat(6, -0.0002, 0.0002),
+                'destination_id' => $destination
             ]),
+            'destination_id' => $destination,
             'passenger_id' => $passenger->id,
             'status' => fake()->randomElement($status),
             'nb_seats' => 1,
