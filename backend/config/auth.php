@@ -41,6 +41,11 @@ return [
             'provider' => 'admins',
         ],
 
+        'api' => [ // This is the default API guard. Let's make it Sanctum for regular users.
+            'driver' => 'sanctum',
+            'provider' => 'users', // Links to your 'users' provider
+        ],
+
     ],
 
     /*

@@ -4,7 +4,7 @@
 
    <script>
       const waypoints = @json($orderedWaypoints);
-      const driverLocation = waypoints[0]; // First one is driver
+      const driverLocation = waypoints[0];
 
       function initMap() {
          const map = new google.maps.Map(document.getElementById("map"), {
@@ -39,52 +39,5 @@
 
    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&callback=initMap" async
       defer></script>
-   {{-- <div id="map" style="height: 600px; width: 100%;"></div>
-
-   <script>
-      const encodedPolyline = {!! json_encode($geometry) !!}; // encoded polyline string from ORS
-      const waypoints = @json($orderedWaypoints); // array of {lat, lng}
-
-      function initMap() {
-         const map = new google.maps.Map(document.getElementById("map"), {
-            zoom: 12,
-            center: waypoints[0],
-         });
-
-         // Decode polyline
-         const routePath = google.maps.geometry.encoding.decodePath(encodedPolyline);
-
-         // Draw polyline
-         const routePolyline = new google.maps.Polyline({
-            path: routePath,
-            geodesic: true,
-            strokeColor: '#007bff',
-            strokeOpacity: 0.8,
-            strokeWeight: 5
-         });
-         routePolyline.setMap(map);
-
-         // Fit bounds
-         const bounds = new google.maps.LatLngBounds();
-         routePath.forEach(point => bounds.extend(point));
-         map.fitBounds(bounds);
-
-         // Add markers
-         waypoints.forEach((point, idx) => {
-            new google.maps.Marker({
-               position: point,
-               map,
-               label: `${idx + 1}`
-            });
-         });
-      }
-
-      window.initMap = initMap;
-   </script>
-
-   <script
-      src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=geometry&callback=initMap"
-      async defer></script> --}}
-
 
 </x-layout>
