@@ -15,6 +15,6 @@ class PassengerController extends Controller
 
     public function show(User $user)
     {
-        return view("passengers.show");
+        return view("passengers.show", ['user' => $user]);
     }
 }

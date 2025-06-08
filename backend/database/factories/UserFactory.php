@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Location;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -23,6 +24,8 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $city = Location::cities()->inRandomOrder()->first();
+
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
@@ -32,8 +35,9 @@ class UserFactory extends Factory
             'phone' => fake()->phoneNumber(),
             'role' => 'passenger',
             'gender' => fake()->randomElement(['male', 'female']),
-            'latitude' => $this->faker->randomFloat(6, 33.05, 34.7),
-            'longitude' => $this->faker->randomFloat(6, 35.1, 36.6),
+            'latitude' => $city->latitude + fake()->randomFloat(6, -0.0002, 0.0002),
+            'longitude' => $city->longitude + fake()->randomFloat(6, -0.0002, 0.0002),
+            'city_id' => $city->id
         ];
     }
 

@@ -6,7 +6,8 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\AdminLoginController;
 use App\Http\Controllers\Admin\DriverController;
 use App\Http\Controllers\Admin\PassengerController;
-
+use App\Http\Controllers\Admin\RideController;
+use App\Http\Controllers\Admin\StationController;
 
 // Login Routes
 Route::middleware('guest')->prefix('admin')->group(function () {
@@ -20,6 +21,8 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    Route::delete('logout', [AdminLoginController::class, 'destroy'])->name('logout');
+
     // Drivers
     Route::get('/drivers', [DriverController::class, 'index'])->name('drivers.index');
     Route::get('/drivers/{user}', [DriverController::class, 'show'])->name('drivers.show');
@@ -29,10 +32,10 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
     Route::get('/passengers/{user}', [PassengerController::class, 'show'])->name('passengers.show');
 
     // Rides
-    Route::get('/rides', [PassengerController::class, 'index'])->name('rides.index');
-    Route::get('/rides/{ride}', [PassengerController::class, 'show'])->name('rides.show');
+    Route::get('/rides', [RideController::class, 'index'])->name('rides.index');
+    Route::get('/rides/{ride}', [RideController::class, 'show'])->name('rides.show');
 
     // Stations
-    Route::get('/stations', [PassengerController::class, 'index'])->name('stations.index');
-    Route::get('/stations/{station}', [PassengerController::class, 'show'])->name('stations.show');
+    Route::get('/stations', [StationController::class, 'index'])->name('stations.index');
+    Route::get('/stations/{station}', [StationController::class, 'show'])->name('stations.show');
 });

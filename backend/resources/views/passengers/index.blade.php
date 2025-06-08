@@ -1,1 +1,3 @@
-<x-layout></x-layout>
+<x-layout>
+   <livewire:users-index role='passenger' />
+</x-layout>

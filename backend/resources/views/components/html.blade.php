@@ -7,6 +7,7 @@
       <link rel="icon" href="{{ Vite::asset('resources/images/logo.png') }}" type="image/png">
       <title>Dashboard</title>
       @vite(['resources/css/app.css', 'resources/js/app.js'])
+      @livewireStyles
    </head>
    {{ $slot }}
 

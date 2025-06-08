@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignIdFor(Location::class)->nullable()->constrained()->restrictOnDelete();
             $table->decimal('latitude', 10, 8);
             $table->decimal('longitude', 11, 8);
+            $table->foreignIdFor(Location::class, 'destination_id')->nullable()->constrained()->restrictOnDelete();
             $table->enum('type', ['pickup', 'dropoff']);
             $table->unique(['latitude', 'longitude', 'ride_id']);
         });

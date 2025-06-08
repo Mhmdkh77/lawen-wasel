@@ -54,6 +54,11 @@ class Ride extends Model
         return $this->belongsTo(Vehicle::class);
     }
 
+    public function nodes()
+    {
+        return $this->hasMany(Node::class);
+    }
+
     public function bookings()
     {
         return $this->hasMany(Booking::class);
@@ -63,7 +68,6 @@ class Ride extends Model
     {
         return $this->hasMany(Rating::class);
     }
-
 
     public function acceptedBookings()
     {

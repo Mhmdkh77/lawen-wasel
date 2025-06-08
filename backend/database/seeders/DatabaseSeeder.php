@@ -19,11 +19,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
+        $this->call(LocationSeeder::class);
         Admin::factory(1)->create();
         User::factory(300)->create();
         Vehicle::factory(10)->create();
-        $this->call(LocationSeeder::class);
         Location::factory(10)->create();
         $this->call(RideSeeder::class);
         Booking::factory(50)->create();
