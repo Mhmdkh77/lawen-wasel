@@ -15,16 +15,16 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->timestamp('phone_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
             $table->string('phone');
             $table->enum('role', ['passenger', 'driver']);
             $table->enum('gender', ['male', 'female'])->nullable();
-            $table->string('driver_license')->nullable();
-            $table->decimal('latitude', 10, 8);
-            $table->decimal('longitude', 11, 8);
-            $table->foreignIdFor(Location::class, 'city_id');
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
+            $table->foreignIdFor(Location::class, 'city_id')->nullable();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

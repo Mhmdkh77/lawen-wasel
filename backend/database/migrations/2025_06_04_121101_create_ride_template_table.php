@@ -1,5 +1,9 @@
 <?php
 
+use App\Models\LocationGroup;
+use App\Models\RideGroup;
+use App\Models\RideTemplate;
+use App\Models\RideTemplateGroup;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Database\Migrations\Migration;
@@ -16,9 +20,13 @@ return new class extends Migration
         Schema::create('ride_template', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->foreignIdFor(User::class, 'driver_id')->constrained()->cascadeOnDelete();
             $table->foreignIdFor(Vehicle::class);
-            $table->dateTime('arrival_time');
+            $table->foreignIdFor(RideTemplateGroup::class);
+            $table->time('scheduled_time');
+            $table->json('recurring_days')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamp('last_generated_at')->nullable();
+            $table->enum('type', ['to_institution', 'from_institution']);
         });
     }
 
