@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\RideGroup;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Database\Migrations\Migration;
@@ -16,12 +17,14 @@ return new class extends Migration
         Schema::create('rides', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->foreignIdFor(User::class, 'driver_id')->constrained()->cascadeOnDelete();
             $table->foreignIdFor(Vehicle::class);
+            $table->foreignIdFor(RideGroup::class);
             $table->dateTime('start_time');
             $table->dateTime('finish_time');
-            $table->dateTime('arrival_time');
+            $table->dateTime('scheduled_time');
+            $table->enum('type', ['to_institution', 'from_institution']);
             $table->unsignedInteger("booked_seats")->default(0);
+            $table->unsignedInteger("available_seats")->default(0);
             $table->enum('status', ['pending', 'active',  'completed'])->default('pending');
         });
     }

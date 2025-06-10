@@ -17,11 +17,13 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->foreignIdFor(Ride::class)->constrained()->cascadeOnDelete();
-            $table->foreignIdFor(Location::class)->nullable()->constrained()->restrictOnDelete();
-            $table->decimal('latitude', 10, 8);
-            $table->decimal('longitude', 11, 8);
-            $table->foreignIdFor(Location::class, 'destination_id')->nullable()->constrained()->restrictOnDelete();
-            $table->enum('type', ['pickup', 'dropoff']);
+            $table->foreignIdFor(Location::class, 'pickup_location')->nullable()->constrained()->restrictOnDelete();
+            $table->decimal('pickup_latitude', 10, 8);
+            $table->decimal('pickup_longitude', 11, 8);
+            $table->foreignIdFor(Location::class, 'dropoff_location')->constrained()->restrictOnDelete();
+            $table->decimal('dropoff_latitude', 10, 8);
+            $table->decimal('dropoff_longitude', 11, 8);
+            $table->enum('status', ['pending', 'completed']);
             $table->unique(['latitude', 'longitude', 'ride_id']);
         });
     }

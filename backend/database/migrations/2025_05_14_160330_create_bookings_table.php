@@ -4,6 +4,7 @@ use App\Models\BookingGroup;
 use App\Models\Location;
 use App\Models\Node;
 use App\Models\Ride;
+use App\Models\RideRequest;
 use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -19,15 +20,12 @@ return new class extends Migration
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
+            $table->foreignIdFor(User::class, 'passenger_id');
             $table->foreignIdFor(Ride::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(BookingGroup::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(RideRequest::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(Node::class)->nullable()->constrained()->restrictOnDelete();
-            $table->foreignIdFor(User::class, 'passenger_id');
-            $table->foreignIdFor(Location::class, 'destination_id');
-            $table->enum('status', ['pending', 'accepted', 'canceled', 'rejected'])->default('pending');
             $table->unsignedInteger('nb_seats')->default(1);
-            $table->dateTime('arrival_time');
-            $table->enum('type', ['round_trip', 'one_way'])->default('one_way');
             $table->decimal('price', 10, 2);
             $table->unique(['ride_id', 'passenger_id']);
         });

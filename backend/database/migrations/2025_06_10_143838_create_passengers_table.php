@@ -1,7 +1,6 @@
 <?php
 
-use App\Models\Location;
-use App\Models\RideTemplate;
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,12 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ride_tamplate_location', function (Blueprint $table) {
+        Schema::create('passengers', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->foreignIdFor(RideTemplate::class)->constrained()->cascadeOnDelete();
-            $table->foreignIdFor(Location::class)->constrained()->cascadeOnDelete();
-            $table->enum('type', ['pickup', 'dropoff']);
+            $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
+
         });
     }
 
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ride_tamplate_location');
+        Schema::dropIfExists('passengers');
     }
 };
