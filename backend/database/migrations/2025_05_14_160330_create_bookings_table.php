@@ -3,6 +3,7 @@
 use App\Models\BookingGroup;
 use App\Models\Location;
 use App\Models\Node;
+use App\Models\Passenger;
 use App\Models\Ride;
 use App\Models\RideRequest;
 use App\Models\User;
@@ -20,7 +21,7 @@ return new class extends Migration
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->foreignIdFor(User::class, 'passenger_id');
+            $table->foreignIdFor(Passenger::class);
             $table->foreignIdFor(Ride::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(BookingGroup::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(RideRequest::class)->constrained()->cascadeOnDelete();
