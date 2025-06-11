@@ -23,7 +23,7 @@ return new class extends Migration
             $table->foreignIdFor(Location::class, 'suggested_pickup_location_id')->nullable()->constrained('locations')->restrictOnDelete();
             $table->decimal('suggested_pickup_latitude', 10, 8)->nullable();
             $table->decimal('suggested_pickup_longitude', 11, 8)->nullable();
-            $table->dateTime('suggested_pickup_time')->nullable();
+            $table->dateTime('pickup_time')->nullable();
             $table->text('driver_message')->nullable();
             $table->enum('status', ['pending', 'accepted', 'rejected', 'expired'])->default('pending');
             $table->unique(['ride_request_id', 'driver_id']);
