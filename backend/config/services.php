@@ -40,4 +40,10 @@ return [
         'base_url' => 'https://api.openrouteservice.org',
     ],
 
+    'twilio' => [
+        'sid' => env('TWILIO_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        'number' => env('TWILIO_PHONE_NUMBER'),
+    ],
+
 ];

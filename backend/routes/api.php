@@ -1,39 +1,59 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Api\RideController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\RegistrationController;
+use App\Http\Controllers\Api\TestController;
+use App\Http\Controllers\Api\VehicleController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
 
 
-// Route::middleware('auth:sanctum')->group(function () {
-//     Route::get('/rides/{ride}', [RideController::class, 'show']);
-//     Route::post('/rides/start', [RideController::class, 'startRide']);
-//     Route::post('/rides/update-location', [RideController::class, 'updateLocation']);
-//     // Add more as needed
-// });
-
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
-    // Protected routes that require email verification
+Route::prefix('register')->controller(RegistrationController::class)->group(function () {
+    Route::post('/start', 'start');
+    Route::post('/verify-email', 'verifyEmail');
+    Route::post('/add-phone', 'addPhone');
+    Route::post('/verify-phone', 'verifyPhone');
+    Route::post('/finalize', 'finalize');
 });
 
-Route::get('/email/verify', function () {
-    return view('auth.verify-email');
-})->middleware('auth')->name('verification.notice');
+Route::post("/login", [AuthController::class, "login"]);
 
-// Handle email verification
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
+Route::middleware('auth:sanctum')->group(function () {
 
-    return redirect('/home'); // or wherever you want
-})->middleware(['auth', 'signed'])->name('verification.verify');
+    // Authentication
+    Route::controller(AuthController::class)->group(function () {
+        Route::post("/user",  "getUser");
+        Route::post("/logout", "logout");
+        Route::post('/change-password',  'changePass');
 
-// Resend verification email
-Route::post('/email/verification-notification', function (Request $request) {
-    $request->user()->sendEmailVerificationNotification();
+        // Forget Pass Routes
+        Route::post('/fpassword/code/send', 'sendResetCode');
+        Route::post('/fpassword/code/verify',  'verifyResetCode');
+        Route::post('/fpassword/code/reset',  'resetPassword');
+    });
 
-    return back()->with('message', 'Verification link sent!');
-})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+    // User
+    Route::controller(UserController::class)->group(function () {
+        Route::post('/user/location', 'updateLocation');
+        Route::post('/driver/licence', 'submitLicense');
+    });
+
+
+    // Vehicle
+    Route::controller(VehicleController::class)->group(function () {});
+
+
+    // Ride
+    Route::get('/rides', [RideController::class, 'index']);
+    Route::get('/rides/{id}', [RideController::class, 'show']);
+    Route::post('/rides/{id}/book', [RideController::class, 'book']);
+});
+
+
+
+Route::get('/test', [TestController::class, 'index']);
