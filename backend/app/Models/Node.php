@@ -12,18 +12,18 @@ class Node extends Model
 
     protected $guarded = [];
 
-    public function scopePickup($query)
+    public function ride()
     {
-        return $query->where('type', 'pickup');
+        return $this->belongsTo(Ride::class);
     }
 
-    public function scopeDropoff($query)
+    public function pickupLocation()
     {
-        return $query->where('type', 'dropoff');
+        return $this->belongsTo(Location::class, 'pickup_location_id');
     }
 
-    public function destination()
+    public function dropoffLocation()
     {
-        return $this->belongsTo(Location::class, 'destination_id');
+        return $this->belongsTo(Location::class, 'dropoff_location_id');
     }
 }

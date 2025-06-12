@@ -6,5 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class RideTemplate extends Model
 {
-    //
+    protected $guarded = [];
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    public function rideTemplateGroup()
+    {
+        return $this->belongsTo(RideTemplateGroup::class);
+    }
 }

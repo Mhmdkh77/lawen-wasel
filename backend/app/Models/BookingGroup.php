@@ -10,4 +10,16 @@ class BookingGroup extends Model
     use HasFactory;
 
     protected $table = 'bookings_group';
+
+    protected $guarded = [];
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function passenger()
+    {
+        return $this->belongsTo(Passenger::class);
+    }
 }

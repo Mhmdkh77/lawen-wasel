@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Driver;
 use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -15,10 +16,9 @@ return new class extends Migration
         Schema::create('vehicles', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->foreignIdFor(User::class, 'driver_id')->constrained()->cascadeOnDelete();;
+            $table->foreignIdFor(Driver::class)->constrained()->cascadeOnDelete();;
             $table->string('plate_number')->unique();
-            $table->string('type', 50);
-            $table->string('model', 50);
+            $table->string('brand', 50);
             $table->string('color', 50);
             $table->unsignedTinyInteger('capacity');
         });

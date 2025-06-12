@@ -25,9 +25,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'phone',
-        'type',
+        'role',
         'gender',
+        'latitude',
+        'longitude',
+        'city_id'
     ];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -48,6 +52,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -72,19 +77,23 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->type === 'driver';
     }
 
+    public function driver()
+    {
+        return $this->hasOne(Driver::class);
+    }
+
+    public function passenger()
+    {
+        return $this->hasOne(Passenger::class);
+    }
+
     public function vehicles()
     {
-        return $this->hasMany(Vehicle::class, 'driver_id');
+        return $this->driver ? $this->driver->vehicles() : collect();
     }
-
-    public function rides()
+    public function city()
     {
-        return $this->hasMany(Ride::class, 'driver_id');
-    }
-
-    public function bookings()
-    {
-        return $this->hasMany(Booking::class, 'passenger_id');
+        return $this->belongsTo(Location::class, 'city_id');
     }
 
     public function ratingsGiven()

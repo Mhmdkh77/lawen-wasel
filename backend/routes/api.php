@@ -40,12 +40,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // User
     Route::controller(UserController::class)->group(function () {
         Route::post('/user/location', 'updateLocation');
-        Route::post('/driver/licence', 'submitLicense');
+        Route::post('driver/licence', 'submitLicense');
     });
 
 
     // Vehicle
-    Route::controller(VehicleController::class)->group(function () {});
+    Route::controller(VehicleController::class)->prefix('driver')->group(function () {
+        Route::post('/vehicles', 'index');
+        Route::post('/vehicles', 'store');
+        Route::put('/vehicles/{id}', 'update');
+        Route::delete('/vehicles/{id}', 'destroy');
+    });
 
 
     // Ride
