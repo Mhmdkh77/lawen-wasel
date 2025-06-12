@@ -18,7 +18,8 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required',
+            'device_token' => 'required|string',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -29,15 +30,14 @@ class AuthController extends Controller
             ]);
         }
 
+        $user->update([
+            'device_token' => $request->device_token,
+        ]);
+
         return response()->json([
             'user' => $user,
             'token' => $user->createToken('mobile')->plainTextToken,
         ]);
-    }
-
-    public function getUser(Request $request)
-    {
-        return response()->json($request->user());
     }
 
     public function logout(Request $request)
