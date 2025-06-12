@@ -10,15 +10,19 @@ class Vehicle extends Model
     /** @use HasFactory<\Database\Factories\VehicleFactory> */
     use HasFactory;
 
-    protected $fillable = ['driver_id', 'plate_number', 'type', 'model', 'color', 'capacity'];
+    protected $guarded = [];
 
     public function driver()
     {
-        return $this->belongsTo(User::class, 'driver_id');
+        return $this->belongsTo(Driver::class);
     }
-
     public function rides()
     {
         return $this->hasMany(Ride::class);
+    }
+
+    public function rideTemplates()
+    {
+        return $this->hasMany(RideTemplate::class);
     }
 }

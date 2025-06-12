@@ -14,44 +14,16 @@ class Ride extends Model
 
     protected $guarded = [];
 
-    // public function scopeWithOpenSeats($query)
-    // {
-    //     return $query->whereHas('vehicle')
-    //         ->whereRaw("
-    //         (select COALESCE(SUM(nb_seats), 0) 
-    //          from bookings 
-    //          where bookings.ride_id = rides.id 
-    //            and bookings.status = 'accepted') < 
-    //         (select capacity from vehicles where vehicles.id = rides.vehicle_id)
-    //     ");
-    // }
 
-    public function scopeWithOpenSeats($query)
-    {
-        return $query->whereHas('vehicle', function ($q) {
-            $q->whereColumn('rides.booked_seats', '<', 'vehicles.capacity');
-        });
-    }
-
-    public function driver()
-    {
-        return $this->belongsTo(User::class, 'driver_id');
-    }
-    public function passengers()
-    {
-        return $this->hasManyThrough(
-            User::class,
-            Booking::class,
-            'ride_id',       // Foreign key on bookings table...
-            'id',            // Foreign key on users table...
-            'id',            // Local key on rides table...
-            'passenger_id'   // Local key on bookings table...
-        );
-    }
 
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function rideGroup()
+    {
+        return $this->belongsTo(RideGroup::class);
     }
 
     public function nodes()
@@ -64,26 +36,42 @@ class Ride extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function rideRequests()
+    {
+        return $this->hasMany(RideRequest::class);
+    }
+
+    public function driver()
+    {
+        return $this->rideGroup->driver();
+    }
+
+    public function passengers()
+    {
+        return $this->hasManyThrough(
+            Passenger::class,
+            Booking::class,
+            'ride_id',       // Foreign key on bookings table...
+            'id',            // Foreign key on users table...
+            'id',            // Local key on rides table...
+            'passenger_id'   // Local key on bookings table...
+        );
+    }
+
     public function ratings()
     {
         return $this->hasMany(Rating::class);
     }
 
-    public function acceptedBookings()
+    public function locations($type)
     {
-        return $this->hasMany(Booking::class)->where('status', 'accepted');
+        return $this->rideGroup->locationGroup->locations
+            ->filter(fn($loc) => $loc->pivot->location_type === $type)
+            ->values();
     }
 
-    public function availableSeats(): int
+    public function scopeWithOpenSeats($query)
     {
-        $bookedSeats = $this->acceptedBookings()->sum('nb_seats');
-        $capacity = $this->vehicle?->capacity ?? 0;
-
-        return max($capacity - $bookedSeats, 0);
-    }
-
-    public function locations()
-    {
-        return $this->belongsToMany(Location::class, 'ride_location')->withPivot('type');
+        return $query->where('available_seats', '>', 0);
     }
 }

@@ -23,8 +23,18 @@ class Location extends Model
         return $query->where('locations.type', 'institution');
     }
 
-    public function rides()
+    public function city()
     {
-        return $this->belongsToMany(Ride::class, 'ride_location')->withPivot('type');
+        return $this->belongsTo(Location::class, 'city_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(Location::class, 'city_id');
+    }
+
+    public function passengers()
+    {
+        return $this->hasMany(User::class, 'city_id');
     }
 }
