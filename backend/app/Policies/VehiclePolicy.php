@@ -8,20 +8,17 @@ use Illuminate\Auth\Access\Response;
 
 class VehiclePolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
-    {
-        return false;
-    }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Vehicle $vehicle): bool
+    public function rud(User $user, Vehicle $vehicle): bool
     {
-        return false;
+        if (!$vehicle->relationLoaded('driver')) {
+            $vehicle->load('driver');
+        }
+
+        return $vehicle->driver->user_id === $user->id;
     }
 
     /**
@@ -29,38 +26,6 @@ class VehiclePolicy
      */
     public function create(User $user): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Vehicle $vehicle): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Vehicle $vehicle): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Vehicle $vehicle): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Vehicle $vehicle): bool
-    {
-        return false;
+        return $user->role === 'driver';
     }
 }

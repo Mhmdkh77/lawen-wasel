@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class VehicleController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
         $vehicles = $request->user()->vehicles;
@@ -15,6 +19,8 @@ class VehicleController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create');
+
         $data = $request->validate([
             'plate_number' => 'required|string|unique:vehicles',
             'brand' => 'required|string|max:50',
@@ -30,9 +36,16 @@ class VehicleController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function show(Request $request, Vehicle $vehicle)
     {
-        $vehicle = $request->user()->vehicles()->findOrFail($id);
+        $this->authorize('rud', $vehicle);
+
+        return response()->json($vehicle);
+    }
+
+    public function update(Request $request, Vehicle $vehicle)
+    {
+        $this->authorize('rud', $vehicle);
 
         $data = $request->validate([
             'plate_number' => "required|string|unique:vehicles,plate_number,{$vehicle->id}",
@@ -49,9 +62,10 @@ class VehicleController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, Vehicle $vehicle)
     {
-        $vehicle = $request->user()->vehicles()->findOrFail($id);
+        $this->authorize('rud', $vehicle);
+
         $vehicle->delete();
 
         return response()->json(['message' => 'Vehicle deleted successfully']);
