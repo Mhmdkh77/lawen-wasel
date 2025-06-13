@@ -1,16 +1,15 @@
 <?php
 
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\RideController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\PassengerController;
 use App\Http\Controllers\Api\RegistrationController;
+use App\Http\Controllers\Api\RideGroupController;
+use App\Http\Controllers\Api\RideRequestController;
 use App\Http\Controllers\Api\TestController;
 use App\Http\Controllers\Api\VehicleController;
-use App\Http\Controllers\Api\RideGroupController;
-use App\Models\User;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\RideSearchController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 
 
@@ -44,7 +43,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('driver/licence', 'submitLicense');
     });
 
-
     // Vehicle
     Route::controller(VehicleController::class)->prefix('driver/vehicles')->group(function () {
         Route::get('/', 'index');
@@ -54,20 +52,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{vehicle}', 'destroy');
     });
 
+    Route::post('/search-rides', [RideSearchController::class, 'search']);
 
-    // Ride Group
-    Route::controller(RideGroupController::class)->prefix('ride-groups')->group(function () {
-        Route::get('/search/one_way', 'searchOneWay');
-        Route::get('/search/round_trip', 'searchRoundTrip');
-        Route::get('/{rideGroup}', 'show');
-        Route::put('/{rideGroup}',  'update');
-        Route::delete('/{rideGroup}',  'destroy');
+    Route::controller(PassengerController::class)->prefix('passenger')->group(function () {
+        Route::post('/ride-requests', 'sendRideRequest');
+        Route::get('/ride-requests',  'getRideRequests');
+        Route::patch('/ride-requests/{rideRequest}/cencel',  'cancelRideRequest');
+        Route::get('/bookings',  'getBookings');
+        Route::patch('/bookings/{booking}/cencel',  'cancelBooking');
     });
 
-    // Ride
-    Route::controller(RideController::class)->prefix('rides')->group(function () {
-        Route::get('/{ride}',  'show');
-        Route::post('/{ride}/book',  'book');
+
+    Route::controller(RideGroupController::class)->prefix('ride-groups')->group(function () {
+        Route::get('/{rideGroup}', 'show');
+        // Route::put('/{rideGroup}',  'update');
+        // Route::delete('/{rideGroup}',  'destroy');
     });
 });
 

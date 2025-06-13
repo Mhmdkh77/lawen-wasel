@@ -25,7 +25,7 @@ return new class extends Migration
             $table->enum('type', ['to_institution', 'from_institution']);
             $table->unsignedInteger("booked_seats")->default(0);
             $table->unsignedInteger("available_seats")->default(0);
-            $table->enum('status', ['pending', 'active',  'completed'])->default('pending');
+            $table->enum('status', ['pending', 'active',  'completed', 'canceled'])->default('pending');
         });
     }
 

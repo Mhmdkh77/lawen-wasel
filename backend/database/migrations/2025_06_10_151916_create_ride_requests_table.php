@@ -1,11 +1,8 @@
 <?php
 
-use App\Models\Driver;
 use App\Models\Location;
 use App\Models\Passenger;
 use App\Models\Ride;
-use App\Models\RideRequest;
-use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -21,7 +18,8 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->foreignIdFor(Passenger::class)->constrained()->cascadeOnDelete();
-            $table->foreignIdFor(Ride::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(Ride::class, "to_inst_ride_id")->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(Ride::class, 'from_inst_ride_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignIdFor(Location::class, 'passenger_location_id')->nullable()->constrained('locations')->restrictOnDelete();
             $table->decimal('passenger_latitude', 10, 8);
             $table->decimal('passenger_longitude', 11, 8);
