@@ -29,6 +29,7 @@ return new class extends Migration
             $table->unsignedInteger('nb_seats')->default(1);
             $table->decimal('price', 10, 2);
             $table->unique(['ride_id', 'passenger_id']);
+            $table->enum('status', ['active', 'passenger_canceled', 'ride_canceled']);
         });
     }
 

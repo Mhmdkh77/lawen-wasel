@@ -1,21 +1,33 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Services;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Http;
-use App\Models\Ride;
 use Illuminate\Support\Facades\Log;
 
-class RideController extends Controller
+class LocationService
 {
-
-    public function index()
+    public function getCityNameFromCoordinates($lat, $lng)
     {
-        return view("rides.index");
-    }
+        $apiKey = config('services.google_maps.api_key');
 
-    public function show(Ride $ride)
+        $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey";
+
+        $response = Http::get($url)->json();
+
+        if (!empty($response['results'])) {
+            foreach ($response['results'] as $result) {
+                foreach ($result['address_components'] as $component) {
+                    if (in_array('locality', $component['types'])) {
+                        return $component['long_name']; // e.g. "Jenin"
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+    public function getOptimizedRoute($ride)
     {
         $ride = $ride->load('nodes.destination', 'driver');
 
