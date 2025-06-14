@@ -1,19 +1,24 @@
 # Use a robust PHP-FPM base image that's Debian-based (so apt-get works)
-# This is recommended for stability and easy package management
-FROM php:8.2-fpm
+FROM php:8.2-fpm # Or php:8.3-fpm, or whatever version matches your local PHP
 
-# Install system dependencies for PostgreSQL and PHP extensions
-# These are the lines that install the missing driver!
-RUN apt-get update && apt-get install -y libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql \
-    && docker-php-ext-enable pdo_pgsql \
+# Install system dependencies for PostgreSQL, Git, and other PHP extensions
+# libpq-dev is for pdo_pgsql
+# git is for Composer's source downloads
+# libzip-dev is for the PHP zip extension
+RUN apt-get update && apt-get install -y libpq-dev git libzip-dev \
+    # Install PHP extensions
+    # pdo, pdo_pgsql for PostgreSQL
+    # zip for Composer's dist downloads
+    # Add other common extensions just in case: mbstring, exif, bcmath, intl, fileinfo
+    && docker-php-ext-install pdo pdo_pgsql zip mbstring exif bcmath intl fileinfo \
+    # Enable extensions (some might need explicit enabling)
+    && docker-php-ext-enable pdo_pgsql zip \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory inside the container
 WORKDIR /app
 
 # Copy composer.json and composer.lock first to leverage Docker layer caching
-# This speeds up future builds if dependencies don't change
 COPY composer.json composer.lock ./
 
 # Install Composer (PHP dependency manager)
@@ -35,7 +40,6 @@ COPY . .
 RUN npm run build
 
 # Set appropriate permissions for Laravel's storage and cache directories
-# 'www-data' is the typical user for PHP-FPM on Debian-based images
 RUN chown -R www-data:www-data storage bootstrap/cache
 RUN chmod -R 775 storage bootstrap/cache
 
