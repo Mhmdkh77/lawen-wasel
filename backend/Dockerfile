@@ -6,11 +6,13 @@ FROM php:8.2-fpm
 # - libpq-dev: Development libraries for PostgreSQL (needed by pdo_pgsql)
 # - git: Required by Composer for downloading some packages from source
 # - libzip-dev: Required for the PHP zip extension (Composer's dist downloads)
+# - libonig-dev: NEW! Required by the mbstring PHP extension for Oniguruma regex support.
 # - common PHP extensions: mbstring, exif, bcmath, intl, fileinfo are frequently used by Laravel packages.
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     git \
     libzip-dev \
+    libonig-dev \
     # Clean up apt cache to keep image size down
     && rm -rf /var/lib/apt/lists/* \
     \
@@ -27,9 +29,9 @@ RUN apt-get update && apt-get install -y \
     fileinfo \
     \
     # Enable extensions (some might need explicit enabling)
-    && docker-php-ext-enable pdo_pgsql zip
+    && docker-php-ext-enable pdo_pgsql zip mbstring
 
-# Set the working directory inside the container to /app
+# Set the working directory inside the container
 WORKDIR /app
 
 # Copy composer.json and composer.lock first
