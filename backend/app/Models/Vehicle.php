@@ -25,4 +25,9 @@ class Vehicle extends Model
     {
         return $this->hasMany(RideTemplate::class);
     }
+
+    public function images()
+    {
+        return $this->hasMany(VehicleImage::class);
+    }
 }

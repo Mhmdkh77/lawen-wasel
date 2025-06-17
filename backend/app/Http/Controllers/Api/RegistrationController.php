@@ -14,6 +14,8 @@ use App\Services\SmsService;
 
 class RegistrationController extends Controller
 {
+    public function setLocation(Request $request) {}
+
     public function start(Request $request)
     {
         $data = $request->validate([
@@ -21,6 +23,7 @@ class RegistrationController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:registrations,email|unique:users,email',
             'gender' => 'required|in:male,female',
+            'phone' => 'phone'
         ]);
 
         $registration = Registration::create([
@@ -28,6 +31,7 @@ class RegistrationController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'gender' => $data['gender'],
+            'phone' => $data['phone'],
             'email_verification_code' => rand(100000, 999999),
         ]);
 
@@ -38,6 +42,26 @@ class RegistrationController extends Controller
             'message' => 'Verification code sent to email.',
         ]);
     }
+
+    public function resendVerifyEmail(Request $request)
+    {
+        $data = $request->validate([
+            'registration_id' => 'required|exists:registrations,id',
+        ]);
+
+        $registration = Registration::findOrFail($data['registration_id']);
+
+        $verificationCode = rand(100000, 999999);
+        $registration->update(['email_verification_code' => $verificationCode]);
+
+        Mail::to($registration->email)->send(new EmailVerificationCodeMail($verificationCode));
+
+        return response()->json([
+            'registration_id' => $registration->id,
+            'message' => 'Verification code sent to email.',
+        ]);
+    }
+
 
     public function verifyEmail(Request $request)
     {
@@ -106,8 +130,10 @@ class RegistrationController extends Controller
 
         $registration = Registration::find($data['registration_id']);
 
-        if (!$registration->email_verified_at || !$registration->phone_verified_at) {
-            return response()->json(['message' => 'Verify email and phone first'], 422);
+        if (!$registration->email_verified_at
+            // || !$registration->phone_verified_at
+        ) {
+            return response()->json(['message' => 'Register Failed, Email Not Verified'], 422);
         }
 
         $user = User::create([

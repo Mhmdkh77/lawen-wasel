@@ -24,7 +24,7 @@ return new class extends Migration
             $table->decimal('dropoff_latitude', 10, 8);
             $table->decimal('dropoff_longitude', 11, 8);
             $table->enum('status', ['pending', 'completed']);
-            $table->unique(['latitude', 'longitude', 'ride_id']);
+            // $table->unique(['latitude', 'longitude', 'ride_id']);
         });
     }
 

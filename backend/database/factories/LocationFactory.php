@@ -17,13 +17,13 @@ class LocationFactory extends Factory
      */
     public function definition(): array
     {
-        $city = Location::where('type', '=', 'city')->inRandomOrder()->first();
+        $city = Location::cities()->inRandomOrder()->first();
 
         return [
             'name' => $city->name . 'Station',
             'type' => 'station',
-            'latitude' => $city->latitude + fake()->randomFloat(6, -0.0002, 0.0002),
-            'longitude' => $city->longitude + fake()->randomFloat(6, -0.0002, 0.0002),
+            'latitude' => $city->latitude + fake()->randomFloat(6, -0.002, 0.002),
+            'longitude' => $city->longitude + fake()->randomFloat(6, -0.002, 0.002),
             'city_id' => $city->id
         ];
     }

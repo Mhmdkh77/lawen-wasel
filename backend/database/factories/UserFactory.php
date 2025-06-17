@@ -26,18 +26,21 @@ class UserFactory extends Factory
     {
         $city = Location::cities()->inRandomOrder()->first();
 
+
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('pass'),
-            'remember_token' => Str::random(10),
+            'phone_verified_at' => now(),
             'phone' => fake()->phoneNumber(),
-            'role' => 'passenger',
+            'password' => bcrypt('password'),
+            'remember_token' => Str::random(10),
+            'role' => fake()->randomElement(['passenger', 'driver']),
             'gender' => fake()->randomElement(['male', 'female']),
-            'latitude' => $city->latitude + fake()->randomFloat(6, -0.0002, 0.0002),
-            'longitude' => $city->longitude + fake()->randomFloat(6, -0.0002, 0.0002),
-            'city_id' => $city->id
+            'latitude' => $city->latitude + fake()->randomFloat(6, -0.002, 0.002),
+            'longitude' => $city->longitude + fake()->randomFloat(6, -0.002, 0.002),
+            'city_id' => $city->id,
+            'device_token' => null,
         ];
     }
 
