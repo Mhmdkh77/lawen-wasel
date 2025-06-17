@@ -1,7 +1,6 @@
 <?php
 
-use App\Models\Driver;
-use App\Models\LocationGroup;
+use App\Models\Vehicle;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,13 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ride_template_groups', function (Blueprint $table) {
+        Schema::create('vehicle_images', function (Blueprint $table) {
             $table->id();
+            $table->foreignIdFor(Vehicle::class)->constrained()->cascadeOnDelete();
+            $table->string('path'); // path to image file
             $table->timestamps();
-            $table->string('name');
-            $table->foreignIdFor(Driver::class);
-            $table->foreignIdFor(LocationGroup::class);
-            $table->boolean('is_active')->default(true);
         });
     }
 
@@ -28,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ride_template_groups');
+        Schema::dropIfExists('vehicle_images');
     }
 };

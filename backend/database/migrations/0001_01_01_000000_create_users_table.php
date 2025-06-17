@@ -26,6 +26,7 @@ return new class extends Migration
             $table->decimal('longitude', 11, 8)->nullable();
             $table->foreignIdFor(Location::class, 'city_id')->nullable();
             $table->string('device_token')->nullable();
+            $table->string('image')->nullable();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

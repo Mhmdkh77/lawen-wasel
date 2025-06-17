@@ -17,12 +17,14 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'login' => 'required',
             'password' => 'required',
             'device_token' => 'required|string',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+
+        $user = User::where($loginField, $request->login)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
@@ -35,36 +37,10 @@ class AuthController extends Controller
         ]);
 
         return response()->json([
-            'user' => $user,
+            'user' => $user->fresh()->load(['driver']),
             'token' => $user->createToken('mobile')->plainTextToken,
         ]);
     }
-
-    public function logout(Request $request)
-    {
-        $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logged out']);
-    }
-
-    public function changePass(Request $request)
-    {
-        $request->validate([
-            'current_password' => 'required',
-            'new_password' => 'required|min:6|confirmed',
-        ]);
-
-        $user = $request->user();
-
-        if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json(['message' => 'Current password is incorrect'], 403);
-        }
-
-        $user->password = Hash::make($request->new_password);
-        $user->save();
-
-        return response()->json(['message' => 'Password changed successfully']);
-    }
-
 
     public function sendResetCode(Request $request)
     {
@@ -86,6 +62,35 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Reset code sent.']);
     }
+
+    public function resendResetCode(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        $record = DB::table('password_reset_codes')
+            ->where('email', $data['email'])
+            ->first();
+
+        if (!$record) {
+            return response()->json(['message' => 'Forbidden!'], 403);
+        }
+
+        $code = rand(100000, 999999);
+
+        DB::table('password_reset_codes')
+            ->where('email', $data['email'])
+            ->update([
+                'code' => $code,
+                'updated_at' => now(),
+            ]);
+
+        Mail::to($data['email'])->send(new ResetCodeMail($code));
+
+        return response()->json(['message' => 'Reset code sent.']);
+    }
+
 
     public function verifyResetCode(Request $request)
     {

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Driver;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -18,12 +19,11 @@ class VehicleFactory extends Factory
     public function definition(): array
     {
         return [
-            'driver_id' => User::factory()->driver()->create(),
+            'driver_id' => Driver::factory(),
             'plate_number' => strtoupper($this->faker->bothify('??###??')),
-            'type' => $this->faker->randomElement(['Sedan', 'SUV', 'Truck', 'Van', 'Coupe']),
-            'model' => $this->faker->word(),
-            'color' => $this->faker->safeColorName(),
-            'capacity' => $this->faker->numberBetween(10, 15),
+            'brand' => fake()->company(),
+            'color' => fake()->safeColorName(),
+            'capacity' => fake()->numberBetween(4, 25),
         ];
     }
 }
