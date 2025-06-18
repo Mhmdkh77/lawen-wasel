@@ -13,6 +13,7 @@ class RideRequest extends Model
         return $this->belongsTo(Passenger::class);
     }
 
+
     public function toInstRide()
     {
         return $this->belongsTo(Ride::class, 'to_inst_ride_id');

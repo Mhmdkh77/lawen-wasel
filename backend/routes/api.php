@@ -3,13 +3,11 @@
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DriverRideController;
-use App\Http\Controllers\Api\PassengerController;
+use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\PassengerRideController;
 use App\Http\Controllers\Api\RegistrationController;
-use App\Http\Controllers\Api\RideGroupController;
 use App\Http\Controllers\Api\TestController;
 use App\Http\Controllers\Api\VehicleController;
-use App\Http\Controllers\Api\RideSearchController;
 use App\Http\Controllers\Api\RideTemplateGroupController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,6 +46,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post("/user/logout", "logout");
     });
 
+    // Location
+    Route::controller(LocationController::class)->prefix('locations')->group(function () {
+        Route::get('/', 'getLocation');
+    });
+
     // Driver ---------------------------------------------------------------
     Route::middleware(['driver'])->prefix('driver')->group(function () {
 
@@ -71,17 +74,24 @@ Route::middleware('auth:sanctum')->group(function () {
             });
 
             Route::controller(DriverRideController::class)->group(function () {
-                Route::get('/ride-requests', 'rideRequests');
-                Route::get('/ride-requests/{rideRequest}', 'rideRequest'); // to do
+                // Ride Request
+                Route::get('/ride-requests', 'rideRequests'); // Done
+                Route::get('/ride-requests/{rideRequest}', 'rideRequest'); // Done
+                Route::patch('/ride-requests/{rideRequest}/reject', 'rejectRideRequest'); // Done
 
-                Route::get('/ride-offers', 'rideOffers'); // To Do
-                Route::get('/ride-offers/{RideOffer}', 'rideOffer'); // To Do
-                Route::post('/ride-offers', 'sendOffer');
+                // Ride Offer
+                Route::get('/ride-offers', 'rideOffers'); // Done
+                Route::post('/ride-offers', 'sendOffer'); // Done
+                Route::get('/ride-offers/{rideOffer}', 'rideOffer'); // Done
+                Route::put('/ride-offers/{rideOffer}', 'editRideOffer'); // To Do
 
+                // Rides
                 Route::get('/rides', 'getRides');
                 Route::post('/rides', 'createRide');
                 Route::get('/rides/{ride}', 'getRide');
                 Route::put('/rides/{ride}', 'updateRide');
+                Route::patch('/rides/{ride}/start', 'startRide');
+                Route::patch('/rides/{ride}/finish', 'finishRide');
             });
         });
     });
@@ -90,22 +100,33 @@ Route::middleware('auth:sanctum')->group(function () {
     // Passenger -------------------------------------------------------------
     Route::middleware(['passenger'])->prefix('passenger')->group(function () {
 
-
         Route::controller(PassengerRideController::class)->group(function () {
+            // Ride Groups
             Route::post('/search-rides', 'search');
+            Route::get('ride-groups/{rideGroup}', 'showRideGroup');
+
+            // Ride Requests
             Route::post('/ride-requests', 'sendRideRequest');
             Route::get('/ride-requests',  'getRideRequests');
+            Route::get('/ride-requests/{rideRequest}',  'getRideRequest');
+            Route::put('/ride-requests/{rideRequest}',  'editRideRequest');
             Route::patch('/ride-requests/{rideRequest}/cencel',  'cancelRideRequest');
+
+            // Ride Offers
+            Route::get('/ride-offers', 'getRideOffers');
+            Route::get('/ride-offers/{rideOffer}', 'getRideOffer');
+            Route::patch('/ride-offers/{rideOffer}/accept', 'acceptRideOffer');
+            Route::patch('/ride-offers/{rideOffer}/reject', 'rejectRideOffer');
+
+            // Bookings
             Route::get('/bookings',  'getBookings');
+            Route::get('/bookings/{booking}',  'getBooking');
             Route::patch('/bookings/{booking}/cencel',  'cancelBooking');
+
+            // Station
+            Route::get('/stations', 'getStation');
+            Route::get('/stations/{station}', 'getStation');
         });
-    });
-
-
-    Route::controller(RideGroupController::class)->prefix('ride-groups')->group(function () {
-        Route::get('/{rideGroup}', 'show');
-        // Route::put('/{rideGroup}',  'update');
-        // Route::delete('/{rideGroup}',  'destroy');
     });
 });
 
