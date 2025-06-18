@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Ride;
 use App\Models\RideOffer;
 use App\Models\RideRequest;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class DriverRideController extends Controller
@@ -36,7 +37,6 @@ class DriverRideController extends Controller
         return response()->json(['ride_requests' => $rideRequests]);
     }
 
-
     public function rideRequest(Request $request, RideRequest $rideRequest)
     {
         $driver = $request->user()->driver;
@@ -50,26 +50,59 @@ class DriverRideController extends Controller
         if (!$ownsRide) {
             return response()->json(['error' => 'You do not have permission to view this request'], 403);
         }
+        $rideRequest->load(['passenger.user', 'ride', 'toInstRide', 'fromInstRide']);
 
-        return response()->json(['ride_request' => $rideRequest]);
+        return response()->json([
+            'ride_request' => $rideRequest
+        ]);
     }
 
-    public function upcomingRide(Request $request)
+    public function rejectRideRequest(Request $request, RideRequest $rideRequest, NotificationService $notificationService)
     {
         $driver = $request->user()->driver;
 
-        $ride = Ride::whereHas('vehicle', function ($q) use ($driver) {
-            $q->where('driver_id', $driver->id);
-        })
-            ->where('scheduled_time', '>', now())
-            ->orderBy('scheduled_time')
-            ->with(['nodes', 'vehicle'])
-            ->first();
+        $rides = [$rideRequest->to_inst_ride_id, $rideRequest->from_inst_ride_id];
 
-        return response()->json(['upcoming_ride' => $ride]);
+        $ownsRide = Ride::whereIn('id', $rides)
+            ->whereHas('vehicle', fn($q) => $q->where('driver_id', $driver->id))
+            ->exists();
+
+        if (!$ownsRide) {
+            return response()->json(['error' => 'You do not have permission to reject this request'], 403);
+        }
+
+        $rideRequest->update([
+            'status' => 'rejected'
+        ]);
+
+        $passenger = $rideRequest->passenger;
+        $deviceToken = $passenger?->user?->device_token;
+
+        if ($deviceToken) {
+            $notificationService->sendPush(
+                $deviceToken,
+                'Ride Request Rejected',
+                'Your ride request was rejected by the driver.',
+                [
+                    'ride_request_id' => $rideRequest->id,
+                    'status' => 'rejected'
+                ]
+            );
+        }
+
+        return response()->json(['message' => 'Ride Request Rejected']);
     }
 
-    public function sendOffer(Request $request)
+    public function rideOffers(Request $request)
+    {
+        $driver = $request->user()->driver;
+
+        $rideOffers = RideOffer::where('driver_id', $driver->id)->with(['rideRequest.passenger.user'])->latest()->paginate(20);;
+
+        return response()->json($rideOffers);
+    }
+
+    public function sendOffer(Request $request, NotificationService $notificationService)
     {
         $request->validate([
             'ride_request_id' => 'required|exists:ride_requests,id',
@@ -97,6 +130,58 @@ class DriverRideController extends Controller
             'status' => 'pending',
         ]);
 
+        $passenger = $rideRequest->passenger;
+        $deviceToken = $passenger?->user?->device_token;
+
+        if ($deviceToken) {
+            $notificationService->sendPush(
+                $deviceToken,
+                'New Ride Offer',
+                'You have new ride offer.',
+                [
+                    'ride_offer_id' => $offer->id,
+                    'status' => 'offered'
+                ]
+            );
+        }
+
         return response()->json(['message' => 'Offer sent successfully', 'offer' => $offer]);
+    }
+
+    public function rideOffer(Request $request, RideOffer $rideOffer)
+    {
+        $driver = $request->user()->driver;
+
+        if ($rideOffer->driver_id  != $driver->id) {
+            return response()->json(['error' => 'You do not have permission to view this Ride Offer'], 403);
+        }
+
+        $rideOffer->load(['rideRequest.passenger.user', 'rideRequest.toInstRide', 'rideRequest.fromInstRide']);
+
+        return  response()->json($rideOffer);
+    }
+
+    public function editRideOffer(Request $request, RideOffer $rideOffer)
+    {
+        $driver = $request->user()->driver;
+
+        if ($rideOffer->driver_id  != $driver->id) {
+            return response()->json(['error' => 'You do not have permission to view this Ride Offer'], 403);
+        }
+    }
+
+    public function upcomingRide(Request $request)
+    {
+        $driver = $request->user()->driver;
+
+        $ride = Ride::whereHas('vehicle', function ($q) use ($driver) {
+            $q->where('driver_id', $driver->id);
+        })
+            ->where('scheduled_time', '>', now())
+            ->orderBy('scheduled_time')
+            ->with(['nodes', 'vehicle'])
+            ->first();
+
+        return response()->json(['upcoming_ride' => $ride]);
     }
 }
