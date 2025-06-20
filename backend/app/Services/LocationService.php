@@ -29,23 +29,23 @@ class LocationService
     }
     public function getOptimizedRoute($ride)
     {
-        $ride = $ride->load('nodes.destination', 'driver');
+        $ride = $ride->load('nodes', 'driver');
 
-        $driverLat = $ride->driver->latitude;
-        $driverLng = $ride->driver->longitude;
+        $driverLat = $ride->driver()->user->latitude;
+        $driverLng = $ride->driver()->user->longitude;
 
         $shipments = [];
 
-        foreach ($ride->nodes->where('type', 'pickup') as $node) {
+        foreach ($ride->nodes as $node) {
             $shipments[] = [
                 'pickup' => [
                     'id' => $node->id,
-                    'location' => [(float)$node->longitude, (float)$node->latitude],
+                    'location' => [(float)$node->pickup_longitude, (float)$node->pickup_latitude],
                     'service' => 200
                 ],
                 'delivery' => [
                     'id' => $node->id,
-                    'location' => [(float) $node->destination->longitude, (float)$node->destination->latitude],
+                    'location' => [(float) $node->dropoff_longitude, (float)$node->dropoff_latitude],
                     'service' => 200
                 ]
             ];
@@ -77,11 +77,7 @@ class LocationService
                 return ['lat' => $step['location'][1], 'lng' => $step['location'][0]];
             })->unique(fn($item) => $item['lat'] . ',' . $item['lng'])->values()->toArray();
 
-
-            return view('rides.show', [
-                'ride' => $ride,
-                'orderedWaypoints' => $orderedWaypoints,
-            ]);
+            return $orderedWaypoints;
         } catch (\Exception $e) {
             // Catch all exceptions for comprehensive logging
             Log::error('Exception caught during ORS optimization for ride ID: ' . $ride->id . ': ' . $e->getMessage(), [

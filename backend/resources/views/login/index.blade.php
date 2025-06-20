@@ -1,12 +1,12 @@
 <x-html>
 
    <body class="flex w-screen h-screen">
-      <div class="flex-4 flex justify-center items-center">
+      <div class="flex-[4] flex justify-center items-center">
          <img src="{{ Vite::asset('resources/images/logo.png') }}" class="h-screen" alt="Logo">
       </div>
-      <div class="flex-3 bg-black flex flex-col justify-center items-center text-white">
+      <div class="flex-[3] bg-black flex flex-col justify-center items-center text-white">
          <h4 class="text-2xl font-semibold mb-8">Login</h4>
-         <form method="POST" action="{{ route("login.attempt") }}" class="space-y-12 w-1/2 p-5">
+         <form method="POST" action="{{ route("admin.login.attempt") }}" class="space-y-12 w-1/2 p-5">
             @csrf
             <div>
                <input type="email" name="email" id="email" class="bg-white rounded-md w-full p-3 text-black"

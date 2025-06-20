@@ -26,4 +26,9 @@ class Node extends Model
     {
         return $this->belongsTo(Location::class, 'dropoff_location_id');
     }
+
+    public function booking()
+    {
+        return $this->hasOne(Booking::class);
+    }
 }

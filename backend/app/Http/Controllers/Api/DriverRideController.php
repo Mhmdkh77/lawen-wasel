@@ -3,11 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\LocationGroup;
+use App\Models\LocationGroupLocationRel;
 use App\Models\Ride;
+use App\Models\RideGroup;
 use App\Models\RideOffer;
 use App\Models\RideRequest;
+use App\Models\Vehicle;
 use App\Services\NotificationService;
+use App\Services\LocationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DriverRideController extends Controller
 {
@@ -170,18 +176,179 @@ class DriverRideController extends Controller
         }
     }
 
-    public function upcomingRide(Request $request)
+
+    public function getRides(Request $request)
     {
         $driver = $request->user()->driver;
 
-        $ride = Ride::whereHas('vehicle', function ($q) use ($driver) {
-            $q->where('driver_id', $driver->id);
-        })
-            ->where('scheduled_time', '>', now())
-            ->orderBy('scheduled_time')
-            ->with(['nodes', 'vehicle'])
-            ->first();
+        $ride_groups = RideGroup::where('driver_id', $driver->id)->with(['rides.vehicle', 'locationGroup.locations'])->get();
 
-        return response()->json(['upcoming_ride' => $ride]);
+        return response()->json($ride_groups);
+    }
+
+    public function createRide(Request $request)
+    {
+        $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'scheduled_time' => 'required|date_format:H:i',
+            'type' => 'required|in:to_institution,from_institution',
+            'locations' => 'required|array|min:1',
+            'locations.*.id' => 'required|exists:locations,id',
+            'locations.*.type' => 'required|in:passenger,institution',
+        ]);
+
+        $driver = $request->user()->driver;
+
+        $vehicle = Vehicle::where('driver_id', $driver->id)->where('id', $request->vehicle_id)->first();
+
+        if (!$vehicle) {
+            return response()->json(['message' => 'Vehicle not found or does not belong to the driver'], 403);
+        }
+
+        try {
+            DB::transaction(function () use ($request, $driver) {
+                $locationGroup = LocationGroup::create();
+
+                foreach ($request->locations as $loc) {
+                    LocationGroupLocationRel::create([
+                        'location_group_id' => $locationGroup->id,
+                        'location_id' => $loc['id'],
+                        'location_type' => $loc['type'],
+                    ]);
+                }
+
+                $rideGroup = RideGroup::create([
+                    'driver_id' => $driver->id,
+                    'location_group_id' => $locationGroup->id,
+                ]);
+
+
+                Ride::create([
+                    'vehicle_id' => $request['vehicle_id'],
+                    'ride_group_id' => $rideGroup->id,
+                    'scheduled_time' => $request['scheduled_time'],
+                    'type' => $request['type'],
+                ]);
+            });
+
+            return response()->json(['message' => 'Ride created successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to create ride', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getRide(Request $request, Ride $ride, LocationService $locationService)
+    {
+        $driver = $request->user()->driver;
+
+        if ($ride->vehicle->driver_id !== $driver->id) {
+            return response()->json(['error' => 'You do not have permission to start this ride'], 403);
+        }
+
+        $route = $locationService->getOptimizedRoute($ride);
+
+        $ride->load(['vehicle.driver', 'nodes', 'passengers', 'locations', 'bookings.node']);
+
+
+
+        return response()->json([
+            'ride' => $ride,
+            'route' => $route,
+        ]);
+    }
+
+
+    public function updateRide(Request $request, Ride $ride, LocationService $locationService)
+    {
+        $driver = $request->user()->driver;
+
+        if ($ride->vehicle->driver_id !== $driver->id) {
+            return response()->json(['error' => 'You do not have permission to start this ride'], 403);
+        }
+    }
+
+    public function startRide(Request $request, Ride $ride, NotificationService $notificationService)
+    {
+        $driver = $request->user()->driver;
+
+        if ($ride->vehicle->driver_id !== $driver->id) {
+            return response()->json(['error' => 'You do not have permission to start this ride'], 403);
+        }
+
+        if ($ride->status !== 'pending') {
+            return response()->json(['error' => 'Ride cannot be started'], 400);
+        }
+
+        $ride->update([
+            'status' => 'active',
+            'start_time' => now()
+        ]);
+
+        $ride->load([['passengers']]);
+
+        foreach ($ride->passengers() as $passenger) {
+            $deviceToken = $passenger?->user?->device_token;
+
+            if ($deviceToken) {
+                $notificationService->sendPush(
+                    $deviceToken,
+                    'Ride Started',
+                    'Your ride has started',
+                    [
+                        'ride_id' => $ride->id,
+                        'status' => 'started'
+                    ]
+                );
+            }
+        }
+
+
+
+        return response()->json([
+            'message' => 'Ride started successfully',
+            'ride' => $ride
+        ]);
+    }
+
+    public function finishtRide(Request $request, Ride $ride, NotificationService $notificationService)
+    {
+
+        $driver = $request->user()->driver;
+
+        if ($ride->vehicle->driver_id !== $driver->id) {
+            return response()->json(['error' => 'You do not have permission to edit this ride'], 403);
+        }
+
+        if ($ride->status !== 'active') {
+            return response()->json(['error' => 'Ride cannot be completed'], 400);
+        }
+
+        $ride->update([
+            'status' => 'completed',
+            'finish_time' => now()
+        ]);
+
+        $ride->load([['passengers']]);
+
+        foreach ($ride->passengers() as $passenger) {
+            $deviceToken = $passenger?->user?->device_token;
+
+            if ($deviceToken) {
+                $notificationService->sendPush(
+                    $deviceToken,
+                    'Ride Ended',
+                    'Your ride has ended',
+                    [
+                        'ride_id' => $ride->id,
+                        'status' => 'ended'
+                    ]
+                );
+            }
+        }
+
+        return response()->json([
+            'message' => 'Ride ended successfully',
+            'ride' => $ride
+        ]);
     }
 }
