@@ -19,12 +19,15 @@
         <table class="w-full text-sm text-left rtl:text-right text-gray-500" style="table-layout: fixed;">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 ">
                 <tr>
-                    <x-table.th field='name' :sortField="$sortField" :sortDirection="$sortDirection" style="width: 25%;">Name</x-table.th>
+                    <x-table.th field='name' :sortField="$sortField" :sortDirection="$sortDirection"
+                        style="width: 25%;">Name</x-table.th>
                     <x-table.th field='email' :sortField="$sortField" :sortDirection="$sortDirection"
                         style="width: 35%;">Email</x-table.th>
-                    <x-table.th field='phone_number' :sortField="$sortField" :sortDirection="$sortDirection" style="width: 20%;">Phone
+                    <x-table.th field='phone_number' :sortField="$sortField" :sortDirection="$sortDirection"
+                        style="width: 20%;">Phone
                         Number</x-table.th>
-                    <x-table.th field='city' :sortField="$sortField" :sortDirection="$sortDirection" style="width: 20%;">City</x-table.th>
+                    <x-table.th field='city' :sortField="$sortField" :sortDirection="$sortDirection"
+                        style="width: 20%;">City</x-table.th>
                 </tr>
             </thead>
             <tbody>
@@ -44,7 +47,7 @@
                             {{ $user->phone_number }}
                         </td>
                         <td class="px-6 py-4">
-                            {{ $user->city->name }}
+                            {{ $user->city?->name }}
                         </td>
 
                     </tr>
