@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 
 class AdminLoginController extends Controller
 {
@@ -16,26 +17,30 @@ class AdminLoginController extends Controller
 
     public function store(Request $request)
     {
+
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
 
-        if (! Auth('admin')->attempt($credentials)) {
+        if (! Auth::guard('admin')->attempt($credentials)) {
             throw ValidationException::withMessages([
-                'email' => 'Sorry, those credentials do not match.',
+                'email' => 'The provided credentials are incorrect.',
             ]);
         }
 
-        request()->session()->regenerate();
+        $request->session()->regenerate();
 
         return redirect(route('admin.dashboard'));
     }
 
     public function destroy()
     {
-        Auth::logout();
+        Auth::guard('admin')->logout();
 
-        return redirect('/admin');
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect()->route('admin.login');
     }
 }

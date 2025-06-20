@@ -75,21 +75,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
             Route::controller(DriverRideController::class)->group(function () {
                 // Ride Request
-                Route::get('/ride-requests', 'rideRequests'); // Done
-                Route::get('/ride-requests/{rideRequest}', 'rideRequest'); // Done
-                Route::patch('/ride-requests/{rideRequest}/reject', 'rejectRideRequest'); // Done
+                Route::get('/ride-requests', 'rideRequests');
+                Route::get('/ride-requests/{rideRequest}', 'rideRequest');
+                Route::patch('/ride-requests/{rideRequest}/reject', 'rejectRideRequest');
 
                 // Ride Offer
-                Route::get('/ride-offers', 'rideOffers'); // Done
-                Route::post('/ride-offers', 'sendOffer'); // Done
-                Route::get('/ride-offers/{rideOffer}', 'rideOffer'); // Done
-                Route::put('/ride-offers/{rideOffer}', 'editRideOffer'); // To Do
+                Route::get('/ride-offers', 'rideOffers');
+                Route::post('/ride-offers', 'sendOffer');
+                Route::get('/ride-offers/{rideOffer}', 'rideOffer');
+                Route::put('/ride-offers/{rideOffer}', 'editRideOffer'); // To Do -----------
 
                 // Rides
                 Route::get('/rides', 'getRides');
                 Route::post('/rides', 'createRide');
                 Route::get('/rides/{ride}', 'getRide');
-                Route::put('/rides/{ride}', 'updateRide');
+                Route::put('/rides/{ride}', 'updateRide'); // To Do ------------
                 Route::patch('/rides/{ride}/start', 'startRide');
                 Route::patch('/rides/{ride}/finish', 'finishRide');
             });
@@ -124,8 +124,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::patch('/bookings/{booking}/cencel',  'cancelBooking');
 
             // Station
-            Route::get('/stations', 'getStation');
-            Route::get('/stations/{station}', 'getStation');
+            Route::get('/stations', 'getStations'); // To Do ------------
+            Route::get('/stations/{station}', 'getStation'); // To Do ------------
         });
     });
 });

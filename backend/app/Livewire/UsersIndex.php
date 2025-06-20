@@ -32,10 +32,17 @@ class UsersIndex extends Component
 
     public function render()
     {
-        $users = User::where('role', $this->role)->where(function ($query) {
-            $query->where('name', 'like', '%' . $this->search . '%')
-                ->orWhere('email', 'like', '%' . $this->search . '%');
-        })->orderBy($this->sortField, $this->sortDirection)
+        $users = User::where('role', $this->role)
+            ->where(function ($query) {
+                $query->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('email', 'like', '%' . $this->search . '%')
+                    ->orWhere('phone_number', 'like', '%' . $this->search . '%')
+                    ->orWhereHas('city', function ($cityQuery) {
+                        $cityQuery->where('name', 'like', '%' . $this->search . '%');
+                    });
+            })
+            ->orderBy($this->sortField, $this->sortDirection)
+            ->with('city')
             ->simplePaginate(50);
 
         return view('livewire.users-index', [
