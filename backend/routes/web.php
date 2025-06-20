@@ -8,6 +8,10 @@ use App\Http\Controllers\Admin\PassengerController;
 use App\Http\Controllers\Admin\RideController;
 use App\Http\Controllers\Admin\StationController;
 
+Route::get('/login', function () {
+    return redirect()->route('admin.login');
+})->name('login');
+
 // Login Routes
 Route::middleware('guest:admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/login', [AdminLoginController::class, 'create'])->name('login');

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Admin;
 use App\Models\Booking;
+use App\Models\Driver;
 use App\Models\Location;
 use App\Models\Passenger;
 use App\Models\Rating;
@@ -25,6 +26,36 @@ class DatabaseSeeder extends Seeder
         Admin::factory(1)->create();
         Passenger::factory(200)->create();
         Vehicle::factory(10)->create();
+        $user1 =  User::create([
+            'name' => 'passenger',
+            'email' => 'passenger@user.com',
+            'email_verified_at' => now(),
+            'phone' => '12345678',
+            'password' => bcrypt('pass'),
+            'role' => 'passenger',
+            'gender' => 'male'
+        ]);
+
+        Passenger::create(
+            [
+                'user_id' => $user1->id
+            ]
+        );
+
+        $user2 =  User::create([
+            'name' => 'driver',
+            'email' => 'driver@user.com',
+            'email_verified_at' => now(),
+            'phone' => '12345678',
+            'password' => bcrypt('pass'),
+            'role' => 'driver',
+            'gender' => 'male'
+        ]);
+
+        Driver::create([
+            'user_id' => $user2->id,
+            'is_verified' => true
+        ]);
 
         // $this->call(RideSeeder::class);
         // Booking::factory(50)->create();

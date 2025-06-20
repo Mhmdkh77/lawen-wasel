@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignIdFor(Vehicle::class, 'dafault_vehicle_id')->nullable()->constrained()->nullOnDelete();
             $table->string('driver_license')->nullable();
             $table->string('driver_license_number')->nullable();
-            $table->boolean("is_verified")->default(false);
+            $table->boolean("is_verified")->default(true);
         });
     }
 
