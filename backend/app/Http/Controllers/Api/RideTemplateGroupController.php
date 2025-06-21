@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Models\{RideTemplateGroup, RideTemplate, LocationGroup, LocationGroupLocationRel};
+use App\Models\{RideTemplateGroup, RideTemplate, LocationGroup, LocationGroupLocationRel, Ride, RideGroup};
 
 class RideTemplateGroupController extends Controller
 {
@@ -52,13 +52,33 @@ class RideTemplateGroupController extends Controller
             ]);
 
             foreach ($request->ride_templates as $template) {
-                RideTemplate::create([
+                $rideTemplate = RideTemplate::create([
                     'vehicle_id' => $template['vehicle_id'],
                     'ride_template_group_id' => $templateGroup->id,
                     'scheduled_time' => $template['scheduled_time'],
                     'recurring_days' => $template['recurring_days'] ?? null,
                     'type' => $template['type'],
                 ]);
+
+                $startOfWeek = now()->startOfWeek();
+                foreach (range(0, 6) as $i) {
+                    $date = $startOfWeek->copy()->addDays($i);
+                    $dayName = strtolower($date->format('l'));
+
+                    if (in_array($dayName, $rideTemplate->recurring_days ?? [])) {
+                        $rideGroup = RideGroup::create([
+                            'driver_id' => $driver->id,
+                            'location_group_id' => $templateGroup->location_group_id,
+                        ]);
+
+                        Ride::create([
+                            'vehicle_id' => $rideTemplate->vehicle_id,
+                            'ride_group_id' => $rideGroup->id,
+                            'scheduled_time' => $rideTemplate->scheduled_time,
+                            'type' => $rideTemplate->type,
+                        ]);
+                    }
+                }
             }
         });
 
