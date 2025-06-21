@@ -52,10 +52,14 @@ class DatabaseSeeder extends Seeder
             'gender' => 'male'
         ]);
 
-        Driver::create([
+        $driver = Driver::create([
             'user_id' => $user2->id,
             'is_verified' => true
         ]);
+
+        Vehicle::factory(1)->create(['driver_id' => $driver->id, 'capacity' => 10]);
+
+
 
         // $this->call(RideSeeder::class);
         // Booking::factory(50)->create();
