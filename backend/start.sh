@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Install PHP dependencies
+if command -v composer &> /dev/null; then
+  echo "Running composer install..."
+  composer install --no-interaction --prefer-dist --optimize-autoloader || { echo "Composer install failed"; exit 1; }
+else
+  echo "⚠️ Composer not installed; please install Composer."
+  exit 1
+fi
+
 # Build frontend assets (if Node is available)
 if command -v npm &> /dev/null; then
   echo "Running Vite build..."
