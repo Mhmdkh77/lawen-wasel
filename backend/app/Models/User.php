@@ -20,17 +20,7 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @var list<string>
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'phone',
-        'role',
-        'gender',
-        'latitude',
-        'longitude',
-        'city_id'
-    ];
+    protected $guarded = [];
 
 
     /**
@@ -69,12 +59,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isPassenger(): bool
     {
-        return $this->type === 'passenger';
+        return $this->role === 'passenger';
     }
 
     public function isDriver(): bool
     {
-        return $this->type === 'driver';
+        return $this->role === 'driver';
     }
 
     public function driver()
@@ -89,8 +79,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function vehicles()
     {
-        return $this->driver ? $this->driver->vehicles() : collect();
+        return $this->driver ? $this->driver->vehicles() : $this->hasMany(Vehicle::class, 'driver_id')->whereRaw('0=1'); // empty relation
     }
+
     public function city()
     {
         return $this->belongsTo(Location::class, 'city_id');

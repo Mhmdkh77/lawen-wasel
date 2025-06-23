@@ -431,6 +431,16 @@ class PassengerRideController extends Controller
                     return null;
                 }
 
+
+                // Seats requested
+                $seats = $rideOffer->rideRequest->nb_seats_requested;
+
+                // Check availability
+                if ($ride->available_seats < $seats) {
+                    throw new \Exception("Not enough available seats in ride ID {$ride->id}");
+                }
+
+
                 // Create Node for the ride
                 $node = Node::create([
                     'ride_id' => $ride->id,
@@ -442,6 +452,9 @@ class PassengerRideController extends Controller
                     'dropoff_longitude' => $institutionLocation->longitude ?? 0,
                     'status' => 'pending',
                 ]);
+
+                $ride->increment('booked_seats', $seats);
+                $ride->decrement('available_seats', $seats);
 
                 // Create Booking for this ride
                 return Booking::create([
@@ -585,12 +598,17 @@ class PassengerRideController extends Controller
         }
 
         DB::transaction(function () use ($booking, $notificationService) {
+            $ride = $booking->ride;
+            $seats = $booking->nb_seats;
 
             $booking->update(['status' => 'passenger_canceled']);
 
             if ($booking->node) {
                 $booking->node->delete();
             }
+
+            $ride->decrement('booked_seats', $seats);
+            $ride->increment('available_seats', $seats);
 
             $driver = $booking->ride->vehicle->driver ?? null;
             if ($driver && $driver->device_token) {

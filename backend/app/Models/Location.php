@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Location extends Model
 {
     use HasFactory;
+
+    protected $guarded = [];
+
     public function scopeCities($query)
     {
         return $query->where('locations.type', 'city');

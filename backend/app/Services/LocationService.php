@@ -31,10 +31,17 @@ class LocationService
     {
         $ride = $ride->load('nodes', 'driver');
 
-        $driverLat = $ride->driver()->user->latitude;
-        $driverLng = $ride->driver()->user->longitude;
+        $driverLat = $ride->driver->user->latitude;
+        $driverLng = $ride->driver->user->longitude;
 
         $shipments = [];
+
+        if ($ride->nodes->isEmpty()) {
+            return [[
+                'lat' => $driverLat,
+                'lng' => $driverLng,
+            ]]; // Just return driver's start location
+        }
 
         foreach ($ride->nodes as $node) {
             $shipments[] = [

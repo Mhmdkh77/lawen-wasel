@@ -11,7 +11,9 @@
             <x-sidebar-link route="admin.drivers.index">Drivers</x-sidebar-link>
             <x-sidebar-link route="admin.passengers.index">Passengers</x-sidebar-link>
             <x-sidebar-link route="admin.rides.index">Rides</x-sidebar-link>
-            <x-sidebar-link route="admin.stations.index">Stations</x-sidebar-link>
+            <x-sidebar-link route="admin.bookings.index">Bookings</x-sidebar-link>
+            <x-sidebar-link route="admin.vehicles.index">Vehicles</x-sidebar-link>
+            <x-sidebar-link route="admin.locations.index">Locations</x-sidebar-link>
          </ul>
       </nav>
       <main class="flex-1 bg-black z-0 max-h-screen flex flex-col">

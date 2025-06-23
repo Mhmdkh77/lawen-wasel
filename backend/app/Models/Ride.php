@@ -14,7 +14,9 @@ class Ride extends Model
 
     protected $guarded = [];
 
-
+    protected $casts = [
+        'scheduled_time' => 'datetime',
+    ];
 
     public function vehicle()
     {
@@ -43,7 +45,14 @@ class Ride extends Model
 
     public function driver()
     {
-        return $this->rideGroup->driver();
+        return $this->hasOneThrough(
+            Driver::class,
+            Vehicle::class,
+            'id',         // Vehicles.id (foreign key on Vehicle)
+            'id',         // Drivers.id (foreign key on Driver)
+            'vehicle_id', // Rides.vehicle_id (local key on Ride)
+            'driver_id'   // Vehicles.driver_id (local key on Vehicle)
+        );
     }
 
     public function passengers()

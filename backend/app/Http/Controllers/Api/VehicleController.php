@@ -55,7 +55,14 @@ class VehicleController extends Controller
     {
         $this->authorize('rud', $vehicle);
 
-        return response()->json($vehicle->load('images'));
+        $vehicle->load('images');
+
+        $vehicle->images->transform(function ($image) {
+            $image->url = Storage::url($image->path);
+            return $image;
+        });
+
+        return response()->json($vehicle);
     }
 
     public function update(Request $request, Vehicle $vehicle)

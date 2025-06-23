@@ -16,12 +16,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('rides', function (Blueprint $table) {
-            $table->id();
+            $table->id();   
             $table->timestamps();
             $table->foreignIdFor(Vehicle::class);
             $table->foreignIdFor(RideGroup::class);
-            $table->dateTime('start_time');
-            $table->dateTime('finish_time');
+            $table->dateTime('start_time')->nullable();
+            $table->dateTime('finish_time')->nullable();
             $table->dateTime('scheduled_time');
             $table->enum('type', ['to_institution', 'from_institution']);
             $table->unsignedInteger("booked_seats")->default(0);

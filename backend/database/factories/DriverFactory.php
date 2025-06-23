@@ -18,13 +18,14 @@ class DriverFactory extends Factory
      */
     public function definition(): array
     {
-        $files = Storage::files('public/driver_licenses');
+
+        $files =    Storage::disk('public')->files('driver_licenses');
         $randomFile = fake()->randomElement($files);
-        $relativePath = str_replace('public/', 'storage/', $randomFile);
+
 
         return [
             'user_id' => User::factory()->state(['role' => 'driver']),
-            'driver_license' => $relativePath,
+            'driver_license' => $randomFile,
             'driver_license_number' => fake()->bothify('DL#######'),
             'is_verified' => fake()->boolean(90),
         ];
