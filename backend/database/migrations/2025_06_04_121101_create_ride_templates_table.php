@@ -17,7 +17,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ride_template', function (Blueprint $table) {
+        Schema::create('ride_templates', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
             $table->foreignIdFor(Vehicle::class);

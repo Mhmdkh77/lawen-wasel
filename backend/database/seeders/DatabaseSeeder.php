@@ -26,6 +26,9 @@ class DatabaseSeeder extends Seeder
         Admin::factory(1)->create();
         Passenger::factory(200)->create();
         Vehicle::factory(10)->create();
+
+        $city = Location::cities()->inRandomOrder()->first();
+
         $user1 =  User::create([
             'name' => 'passenger',
             'email' => 'passenger@user.com',
@@ -33,7 +36,10 @@ class DatabaseSeeder extends Seeder
             'phone' => '12345678',
             'password' => bcrypt('pass'),
             'role' => 'passenger',
-            'gender' => 'male'
+            'gender' => 'male',
+            'latitude' => $city->latitude + fake()->randomFloat(6, -0.002, 0.002),
+            'longitude' => $city->longitude + fake()->randomFloat(6, -0.002, 0.002),
+            'city_id' => $city->id,
         ]);
 
         Passenger::create(
@@ -42,6 +48,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+
+        $city = Location::cities()->inRandomOrder()->first();
         $user2 =  User::create([
             'name' => 'driver',
             'email' => 'driver@user.com',
@@ -49,7 +57,10 @@ class DatabaseSeeder extends Seeder
             'phone' => '12345678',
             'password' => bcrypt('pass'),
             'role' => 'driver',
-            'gender' => 'male'
+            'latitude' => $city->latitude + fake()->randomFloat(6, -0.002, 0.002),
+            'longitude' => $city->longitude + fake()->randomFloat(6, -0.002, 0.002),
+            'gender' => 'male',
+            'city_id' => $city->id,
         ]);
 
         $driver = Driver::create([
@@ -59,7 +70,7 @@ class DatabaseSeeder extends Seeder
 
         Vehicle::factory(1)->create(['driver_id' => $driver->id, 'capacity' => 10]);
 
-
+        $this->call(RideSeeder::class);
 
         // $this->call(RideSeeder::class);
         // Booking::factory(50)->create();

@@ -19,7 +19,7 @@ class AuthController extends Controller
         $request->validate([
             'login' => 'required',
             'password' => 'required',
-            'device_token' => 'required|string',
+            'device_token' => 'nullable|string',
         ]);
 
         $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';

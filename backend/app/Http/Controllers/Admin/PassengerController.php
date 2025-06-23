@@ -15,6 +15,13 @@ class PassengerController extends Controller
 
     public function show(User $user)
     {
+
+        if ($user->role === 'driver') {
+            abort(404, 'Passenger not found.');
+        }
+
+        $user->load(['city', 'passenger']);
+
         return view("passengers.show", ['user' => $user]);
     }
 }

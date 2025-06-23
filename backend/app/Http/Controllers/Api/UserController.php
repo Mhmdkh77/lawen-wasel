@@ -7,6 +7,7 @@ use App\Models\Location;
 use Illuminate\Http\Request;
 use App\Services\LocationService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -16,11 +17,22 @@ class UserController extends Controller
 
         if ($user->role === 'driver') {
             $user->load('driver.vehicles');
+
+            $driverLicenseUrl = $user->driver && $user->driver->driver_license_path
+                ? Storage::url($user->driver->driver_license_path)
+                : null;
         } elseif ($user->role === 'passenger') {
             $user->load('passenger');
+            $driverLicenseUrl = null;
+        } else {
+            $driverLicenseUrl = null;
         }
 
-        return response()->json($user);
+        return response()->json([
+            'user' => $user,
+            'image' => $user->image ? Storage::url($user->image) : null,
+            'driver_license_url' => $driverLicenseUrl,
+        ]);
     }
 
     public function updateUser(Request $request)

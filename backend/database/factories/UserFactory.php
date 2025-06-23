@@ -6,6 +6,7 @@ use App\Models\Location;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -27,6 +28,9 @@ class UserFactory extends Factory
         $city = Location::cities()->inRandomOrder()->first();
 
 
+        $files = Storage::disk('public')->files('profile_images');
+        $randomFile = fake()->randomElement($files);
+
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
@@ -41,6 +45,7 @@ class UserFactory extends Factory
             'longitude' => $city->longitude + fake()->randomFloat(6, -0.002, 0.002),
             'city_id' => $city->id,
             'device_token' => null,
+            'image' => $randomFile
         ];
     }
 

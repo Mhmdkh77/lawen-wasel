@@ -9,7 +9,7 @@ class BookingGroup extends Model
 {
     use HasFactory;
 
-    protected $table = 'bookings_group';
+    protected $table = 'booking_groups';
 
     protected $guarded = [];
 

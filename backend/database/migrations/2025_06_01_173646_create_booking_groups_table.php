@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('bookings_group', function (Blueprint $table) {
+        Schema::create('booking_groups', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
             $table->foreignIdFor(Passenger::class)->constrained()->cascadeOnDelete();
