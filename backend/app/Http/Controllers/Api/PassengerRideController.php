@@ -24,6 +24,7 @@ class PassengerRideController extends Controller
 {
     public function search(Request $request)
     {
+
         $data = $request->validate([
             'passenger_latitude' => 'required|numeric|between:-90,90',
             'passenger_longitude' => 'required|numeric|between:-180,180',
@@ -33,15 +34,18 @@ class PassengerRideController extends Controller
             'nb_seats' => 'required|integer|min:1',
         ]);
 
-        $locationService = new LocationService();
-        $cityName = $locationService->getCityNameFromCoordinates($data['passenger_latitude'], $data['passenger_longitude']);
-        $passengerCity =  Location::where('type', 'city')
-            ->whereRaw('LOWER(name) = ?', [strtolower($cityName)])
-            ->first();
+        // $locationService = new LocationService();
+        // $cityName = $locationService->getCityNameFromCoordinates($data['passenger_latitude'], $data['passenger_longitude']);
+        // $passengerCity =  Location::where('type', 'city')
+        //     ->whereRaw('LOWER(name) = ?', [strtolower($cityName)])
+        //     ->first();
 
-        if (!$passengerCity) {
-            return response()->json(['message' => 'City not supported'], 422);
-        }
+        // if (!$passengerCity) {
+        //     return response()->json([
+        //         'message' => 'City not supported',
+        //         'city' => $cityName
+        //     ], 422);
+        // }
 
         $arrivalFrom = Carbon::parse($data['arrival_time'])->subHour();
         $arrivalTo = Carbon::parse($data['arrival_time'])->addHour();
@@ -54,20 +58,20 @@ class PassengerRideController extends Controller
                 ->where('type', 'to_institution')
                 ->where('available_seats', '>=', $data['nb_seats']);
         }])
-            ->whereHas('locationGroup.locations', function ($q) use ($passengerCity) {
-                $q->where('location_type', 'passenger')
-                    ->where(function ($q2) use ($passengerCity) {
-                        $q2->where('id', $passengerCity->id)
-                            ->orWhere('city_id', $passengerCity->city_id);
-                    });
-            })
+            // ->whereHas('locationGroup.locations', function ($q) use ($passengerCity) {
+            //     $q->where('location_type', 'passenger')
+            //         ->where(function ($q2) use ($passengerCity) {
+            //             $q2->where('id', $passengerCity->id)
+            //                 ->orWhere('city_id', $passengerCity->city_id);
+            //         });
+            // })
             ->whereHas('locationGroup.locations', function ($q) use ($institutionLocation) {
                 $q->where('location_type', 'institution')
                     ->where(function ($q2) use ($institutionLocation) {
-                        $q2->where('id', $institutionLocation->id)
-                            ->orWhere('city_id', $institutionLocation->city_id);
+                        $q2->where('locations.id', $institutionLocation->id)
+                            ->orWhere('locations.city_id', $institutionLocation->city_id);
                     });
-            })
+            })->limit(50)
             ->get();
 
 
