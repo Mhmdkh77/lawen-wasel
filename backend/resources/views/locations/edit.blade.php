@@ -1,7 +1,7 @@
 <x-layout>
    <div class=" bg-white p-6 rounded shadow overflow-auto">
       <h2 class="text-2xl font-bold mb-4">Add New Location</h2>
-      <form method="POST" action="{{ route('admin.locations.store') }}">
+      <form method="POST" action="{{ route('admin.locations.update', $location) }}">
          @include('locations._form')
       </form>
       @if(isset($location))
