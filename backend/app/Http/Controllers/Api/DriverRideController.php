@@ -82,19 +82,19 @@ class DriverRideController extends Controller
         ]);
 
         $passenger = $rideRequest->passenger;
-        $deviceToken = $passenger?->user?->device_token;
+        // $deviceToken = $passenger?->user?->device_token;
 
-        if ($deviceToken) {
-            $notificationService->sendPush(
-                $deviceToken,
-                'Ride Request Rejected',
-                'Your ride request was rejected by the driver.',
-                [
-                    'ride_request_id' => $rideRequest->id,
-                    'status' => 'rejected'
-                ]
-            );
-        }
+        // if ($deviceToken) {
+        //     $notificationService->sendPush(
+        //         $deviceToken,
+        //         'Ride Request Rejected',
+        //         'Your ride request was rejected by the driver.',
+        //         [
+        //             'ride_request_id' => $rideRequest->id,
+        //             'status' => 'rejected'
+        //         ]
+        //     );
+        // }
 
         return response()->json(['message' => 'Ride Request Rejected']);
     }
@@ -137,19 +137,19 @@ class DriverRideController extends Controller
         ]);
 
         $passenger = $rideRequest->passenger;
-        $deviceToken = $passenger?->user?->device_token;
+        // $deviceToken = $passenger?->user?->device_token;
 
-        if ($deviceToken) {
-            $notificationService->sendPush(
-                $deviceToken,
-                'New Ride Offer',
-                'You have new ride offer.',
-                [
-                    'ride_offer_id' => $offer->id,
-                    'status' => 'offered'
-                ]
-            );
-        }
+        // if ($deviceToken) {
+        //     $notificationService->sendPush(
+        //         $deviceToken,
+        //         'New Ride Offer',
+        //         'You have new ride offer.',
+        //         [
+        //             'ride_offer_id' => $offer->id,
+        //             'status' => 'offered'
+        //         ]
+        //     );
+        // }
 
         return response()->json(['message' => 'Offer sent successfully', 'offer' => $offer]);
     }
@@ -287,19 +287,19 @@ class DriverRideController extends Controller
         $ride->load([['passengers']]);
 
         foreach ($ride->passengers() as $passenger) {
-            $deviceToken = $passenger?->user?->device_token;
+            // $deviceToken = $passenger?->user?->device_token;
 
-            if ($deviceToken) {
-                $notificationService->sendPush(
-                    $deviceToken,
-                    'Ride Started',
-                    'Your ride has started',
-                    [
-                        'ride_id' => $ride->id,
-                        'status' => 'started'
-                    ]
-                );
-            }
+            // if ($deviceToken) {
+            //     $notificationService->sendPush(
+            //         $deviceToken,
+            //         'Ride Started',
+            //         'Your ride has started',
+            //         [
+            //             'ride_id' => $ride->id,
+            //             'status' => 'started'
+            //         ]
+            //     );
+            // }
         }
 
 
@@ -331,19 +331,19 @@ class DriverRideController extends Controller
         $ride->load([['passengers']]);
 
         foreach ($ride->passengers() as $passenger) {
-            $deviceToken = $passenger?->user?->device_token;
+            // $deviceToken = $passenger?->user?->device_token;
 
-            if ($deviceToken) {
-                $notificationService->sendPush(
-                    $deviceToken,
-                    'Ride Ended',
-                    'Your ride has ended',
-                    [
-                        'ride_id' => $ride->id,
-                        'status' => 'ended'
-                    ]
-                );
-            }
+            // if ($deviceToken) {
+            //     $notificationService->sendPush(
+            //         $deviceToken,
+            //         'Ride Ended',
+            //         'Your ride has ended',
+            //         [
+            //             'ride_id' => $ride->id,
+            //             'status' => 'ended'
+            //         ]
+            //     );
+            // }
         }
 
         return response()->json([

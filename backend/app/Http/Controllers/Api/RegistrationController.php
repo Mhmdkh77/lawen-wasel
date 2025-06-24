@@ -23,7 +23,7 @@ class RegistrationController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:registrations,email|unique:users,email',
             'gender' => 'required|in:male,female',
-            'phone' => 'phone'
+            'phone' => 'required'
         ]);
 
         $registration = Registration::create([

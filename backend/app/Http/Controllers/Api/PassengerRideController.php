@@ -268,19 +268,19 @@ class PassengerRideController extends Controller
             'status' => 'pending',
         ]);
 
-        $deviceToken = Driver::where('id', $data['driver_id'])->first();
+        // $deviceToken = Driver::where('id', $data['driver_id'])->first();
 
-        if ($deviceToken) {
-            $notificationService->sendPush(
-                $deviceToken,
-                'New Ride Request',
-                'Your have new ride request',
-                [
-                    'ride_request_id' => $rideRequest->id,
-                    'status' => 'ended'
-                ]
-            );
-        }
+        // if ($deviceToken) {
+        //     $notificationService->sendPush(
+        //         $deviceToken,
+        //         'New Ride Request',
+        //         'Your have new ride request',
+        //         [
+        //             'ride_request_id' => $rideRequest->id,
+        //             'status' => 'ended'
+        //         ]
+        //     );
+        // }
 
         return response()->json([
             'message' => 'Ride request submitted successfully.',
@@ -348,17 +348,17 @@ class PassengerRideController extends Controller
         ])->filter()->unique('id');
 
         foreach ($drivers as $driver) {
-            if ($driver->device_token) {
-                $notificationService->sendPush(
-                    $driver->device_token,
-                    'Ride Request Canceled',
-                    'A passenger has canceled a ride request.',
-                    [
-                        'ride_request_id' => $rideRequest->id,
-                        'status' => 'canceled'
-                    ]
-                );
-            }
+            // if ($driver->device_token) {
+            //     $notificationService->sendPush(
+            //         $driver->device_token,
+            //         'Ride Request Canceled',
+            //         'A passenger has canceled a ride request.',
+            //         [
+            //             'ride_request_id' => $rideRequest->id,
+            //             'status' => 'canceled'
+            //         ]
+            //     );
+            // }
         }
 
         return response()->json(['message' => 'Ride request canceled successfully.']);
@@ -477,17 +477,17 @@ class PassengerRideController extends Controller
 
             // Notify driver
             $driver = $rideOffer->driver;
-            if ($driver && $driver->device_token) {
-                $notificationService->sendPush(
-                    $driver->device_token,
-                    'Ride Offer Accepted',
-                    'A passenger has accepted your ride offer.',
-                    [
-                        'ride_offer_id' => $rideOffer->id,
-                        'status' => 'accepted',
-                    ]
-                );
-            }
+            // if ($driver && $driver->device_token) {
+            //     $notificationService->sendPush(
+            //         $driver->device_token,
+            //         'Ride Offer Accepted',
+            //         'A passenger has accepted your ride offer.',
+            //         [
+            //             'ride_offer_id' => $rideOffer->id,
+            //             'status' => 'accepted',
+            //         ]
+            //     );
+            // }
         });
 
         return response()->json(['message' => 'Ride offer accepted and bookings created successfully.']);
@@ -514,17 +514,17 @@ class PassengerRideController extends Controller
         $rideOffer->update(['status' => 'rejected']);
 
         $driver = $rideOffer->driver;
-        if ($driver && $driver->device_token) {
-            $notificationService->sendPush(
-                $driver->device_token,
-                'Ride Offer Rejected',
-                'A passenger has rejected your ride offer.',
-                [
-                    'ride_offer_id' => $rideOffer->id,
-                    'status' => 'rejected',
-                ]
-            );
-        }
+        // if ($driver && $driver->device_token) {
+        //     $notificationService->sendPush(
+        //         $driver->device_token,
+        //         'Ride Offer Rejected',
+        //         'A passenger has rejected your ride offer.',
+        //         [
+        //             'ride_offer_id' => $rideOffer->id,
+        //             'status' => 'rejected',
+        //         ]
+        //     );
+        // }
 
         return response()->json(['message' => 'Ride offer rejected successfully.']);
     }
@@ -611,17 +611,17 @@ class PassengerRideController extends Controller
             $ride->increment('available_seats', $seats);
 
             $driver = $booking->ride->vehicle->driver ?? null;
-            if ($driver && $driver->device_token) {
-                $notificationService->sendPush(
-                    $driver->device_token,
-                    'Booking Canceled',
-                    'A passenger has canceled their booking.',
-                    [
-                        'booking_id' => $booking->id,
-                        'status' => 'passenger_canceled',
-                    ]
-                );
-            }
+            // if ($driver && $driver->device_token) {
+            //     $notificationService->sendPush(
+            //         $driver->device_token,
+            //         'Booking Canceled',
+            //         'A passenger has canceled their booking.',
+            //         [
+            //             'booking_id' => $booking->id,
+            //             'status' => 'passenger_canceled',
+            //         ]
+            //     );
+            // }
         });
 
         return response()->json(['message' => 'Booking canceled successfully.']);
