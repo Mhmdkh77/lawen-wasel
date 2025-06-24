@@ -1,5 +1,8 @@
 *
 !.gitignore
 !driver_licenses/
+!driver_licenses/**
 !profile_images/
+!profile_images/**
 !vehicle_images/
+!vehicle_images/**
