@@ -1,3 +1,3 @@
 <x-layout>
-   <livewire:users-index role='driver' />
+   <livewire:drivers-index />
 </x-layout>

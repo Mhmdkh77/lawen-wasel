@@ -59,7 +59,7 @@ class LocationController extends Controller
             return back()->withErrors(['city_id' => 'Cities cannot have parent cities.']);
         }
 
-        Location::create($request->only('name', 'latitude', 'longitude', 'type', 'city_id'));
+        $location->update($request->only('name', 'latitude', 'longitude', 'type', 'city_id'));
 
         return redirect()->route('admin.locations.index')->with('success', 'Location updated.');
     }

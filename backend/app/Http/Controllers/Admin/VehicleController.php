@@ -16,6 +16,7 @@ class VehicleController extends Controller
     public function show(Vehicle $vehicle)
     {
 
-        return view("vehicles.show",);
+        $vehicle->load(['images', 'driver.user']);
+        return view('vehicles.show', compact('vehicle'));
     }
 }

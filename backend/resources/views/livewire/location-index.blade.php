@@ -31,13 +31,13 @@
                 <tr>
                     <x-table.th field='name' :sortField="$sortField" :sortDirection="$sortDirection"
                         style="width: 25%;">Name</x-table.th>
-                    <x-table.th field='email' :sortField="$sortField" :sortDirection="$sortDirection"
+                    <x-table.th field='type' :sortField="$sortField" :sortDirection="$sortDirection"
                         style="width: 35%;">Type</x-table.th>
-                    <x-table.th field='phone_number' :sortField="$sortField" :sortDirection="$sortDirection"
+                    <x-table.th field='latitude' :sortField="$sortField" :sortDirection="$sortDirection"
                         style="width: 20%;">Latitude</x-table.th>
-                    <x-table.th field='phone_number' :sortField="$sortField" :sortDirection="$sortDirection"
+                    <x-table.th field='longitude' :sortField="$sortField" :sortDirection="$sortDirection"
                         style="width: 20%;">Longitude</x-table.th>
-                    <x-table.th field='city' :sortField="$sortField" :sortDirection="$sortDirection"
+                    <x-table.th field='city_id' :sortField="$sortField" :sortDirection="$sortDirection"
                         style="width: 20%;">Parent City</x-table.th>
                 </tr>
             </thead>

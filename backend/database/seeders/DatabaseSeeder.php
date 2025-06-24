@@ -11,8 +11,10 @@ use App\Models\Rating;
 use App\Models\Ride;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\VehicleImage;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 class DatabaseSeeder extends Seeder
 {
@@ -25,7 +27,22 @@ class DatabaseSeeder extends Seeder
         Location::factory(20)->create(); // create stations
         Admin::factory(1)->create();
         Passenger::factory(200)->create();
-        Vehicle::factory(10)->create();
+        for ($i = 0; $i < 10; $i++) {
+            $vehicle = Vehicle::factory()->create();
+
+            $files = Storage::disk('public')->files('vehicle_images');
+
+            for ($j = 0; $j < 2; $j++) {
+                $randomFile = fake()->randomElement($files);
+
+                VehicleImage::create([
+                    'vehicle_id' => $vehicle->id,
+                    'path' => $randomFile,
+                ]);
+            }
+        }
+
+
 
         $city = Location::cities()->inRandomOrder()->first();
 
