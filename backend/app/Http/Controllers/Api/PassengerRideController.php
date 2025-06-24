@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Redis;
 
 class PassengerRideController extends Controller
 {
-    public function seach(Request $request)
+    public function search(Request $request)
     {
         $data = $request->validate([
             'passenger_latitude' => 'required|numeric|between:-90,90',
