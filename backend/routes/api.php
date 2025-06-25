@@ -77,7 +77,9 @@ Route::middleware('auth:sanctum')->group(function () {
                 // Ride Request
                 Route::get('/ride-requests', 'rideRequests');
                 Route::get('/ride-requests/{rideRequest}', 'rideRequest');
+                Route::patch('/ride-requests/{rideRequest}/accept', 'acceptRideRequest');
                 Route::patch('/ride-requests/{rideRequest}/reject', 'rejectRideRequest');
+
 
                 // Ride Offer
                 Route::get('/ride-offers', 'rideOffers');
