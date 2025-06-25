@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
+use App\Models\BookingGroup;
 use App\Models\LocationGroup;
 use App\Models\LocationGroupLocationRel;
+use App\Models\Node;
 use App\Models\Ride;
 use App\Models\RideGroup;
 use App\Models\RideOffer;
@@ -61,6 +64,101 @@ class DriverRideController extends Controller
         return response()->json([
             'ride_request' => $rideRequest
         ]);
+    }
+
+
+    public function acceptRideRequest(Request $request, RideRequest $rideRequest, NotificationService $notificationService)
+    {
+        $driver = $request->user()->driver;
+
+        $rideRequest->load([
+            'passenger',
+            'institutionLocation',
+            'toInstRide',
+            'fromInstRide',
+        ]);
+
+
+        if ($rideRequest->status !== 'pending') {
+            return response()->json(['error' => 'This offer has already been responded to.'], 400);
+        }
+
+        DB::transaction(function () use ($rideRequest, $notificationService) {
+            // Update offer status
+            $rideRequest->update(['status' => 'accepted']);
+
+            // Create booking group (one per passenger per accepted offer)
+            $bookingGroup = BookingGroup::create([
+                'passenger_id' => $rideRequest->passenger->id,
+            ]);
+
+            $institutionLocation = $rideRequest->institutionLocation;
+
+            $createBookingAndNode = function ($ride, $type) use ($bookingGroup, $rideRequest, $institutionLocation) {
+                if (!$ride) {
+                    return null;
+                }
+
+
+                // Seats requested
+                $seats = $rideRequest->nb_seats_requested;
+
+                // Check availability
+                if ($ride->available_seats < $seats) {
+                    throw new \Exception("Not enough available seats in ride ID {$ride->id}");
+                }
+
+
+                // Create Node for the ride
+                $node = Node::create([
+                    'ride_id' => $ride->id,
+                    'pickup_location_id' => $rideRequest->passenger_location_id ?? null,
+                    'pickup_latitude' => $rideOffer->passenger_latitude ?? 0,
+                    'pickup_longitude' => $rideOffer->pickup_longitude ?? 0,
+                    'dropoff_location_id' => $institutionLocation->id,
+                    'dropoff_latitude' => $institutionLocation->latitude ?? 0,
+                    'dropoff_longitude' => $institutionLocation->longitude ?? 0,
+                    'status' => 'pending',
+                ]);
+
+                $ride->increment('booked_seats', $seats);
+                $ride->decrement('available_seats', $seats);
+
+                // Create Booking for this ride
+                return Booking::create([
+                    'passenger_id' => $rideRequest->passenger->id,
+                    'ride_id' => $ride->id,
+                    'booking_group_id' => $bookingGroup->id,
+                    'ride_request_id' => $rideRequest->id,
+                    'node_id' => $node->id,
+                    'nb_seats' => $rideRequest->nb_seats_requested,
+                    'price' => 100,
+                    'status' => 'active',
+                ]);
+            };
+
+            // Create booking & node for to_institution ride (if present)
+            $toBooking = $createBookingAndNode($rideRequest->toInstRide, 'to_institution');
+
+            // Create booking & node for from_institution ride (if present)
+            $fromBooking = $createBookingAndNode($rideRequest->fromInstRide, 'from_institution');
+
+            // Notify driver
+            // $driver = $rideOffer->driver;
+            // if ($driver && $driver->device_token) {
+            //     $notificationService->sendPush(
+            //         $driver->device_token,
+            //         'Ride Offer Accepted',
+            //         'A passenger has accepted your ride offer.',
+            //         [
+            //             'ride_offer_id' => $rideOffer->id,
+            //             'status' => 'accepted',
+            //         ]
+            //     );
+            // }
+        });
+
+        return response()->json(['message' => 'Ride offer accepted and bookings created successfully.']);
     }
 
     public function rejectRideRequest(Request $request, RideRequest $rideRequest, NotificationService $notificationService)
@@ -206,7 +304,7 @@ class DriverRideController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $driver) {
+            DB::transaction(function () use ($request, $driver, $vehicle) {
                 $locationGroup = LocationGroup::create();
 
                 foreach ($request->locations as $loc) {
@@ -228,6 +326,7 @@ class DriverRideController extends Controller
                     'ride_group_id' => $rideGroup->id,
                     'scheduled_time' => $request['scheduled_time'],
                     'type' => $request['type'],
+                    'available_seats' => $vehicle->capacity,
                 ]);
             });
 
