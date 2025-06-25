@@ -75,7 +75,7 @@ class PassengerRideController extends Controller
             ->get();
 
 
-        if ($data['return_time']) {
+        if (array_key_exists('return_time', $data) && $data['return_time']) {
             $returnFrom = Carbon::parse($data['return_time'])->subHour();
             $returnTo = Carbon::parse($data['return_time'])->addHour();
 
