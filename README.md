@@ -10,7 +10,6 @@ A comprehensive Laravel-based ride-sharing platform designed specifically for un
 - **Negotiation System**: Receive and accept custom offers from drivers with suggested pickup points and pricing
 - **Booking Management**: Track active bookings, view ride details, and cancel reservations
 - **Multi-Stop Support**: Automated pickup and dropoff point optimization
-- **Rating System**: Rate drivers after completed rides to ensure service quality
 
 ### For Drivers
 - **Vehicle Management**: Register and manage multiple vehicles with image galleries
@@ -56,7 +55,7 @@ A comprehensive Laravel-based ride-sharing platform designed specifically for un
 ## 📸 Screenshots
 
 ### Admin Login
-![Admin Login](docs/screenshots/admin-login.png)
+![Admin Login](docs/screenshots/admin_login.png)
 *Secure admin authentication interface*
 
 ### Dashboard Overview
