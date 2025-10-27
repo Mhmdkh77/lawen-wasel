@@ -153,310 +153,58 @@ Access the application at `http://localhost:8000`
 
 ## 📱 API Documentation
 
-### Base URL
-```
-http://localhost:8000/api
-```
+The platform provides a comprehensive RESTful API with 30+ endpoints for seamless integration.
 
-### Authentication
+### Quick Start
 
-#### Register (Multi-Step Process)
+**Base URL**: `http://localhost:8000/api`
 
-**Step 1: Start Registration**
+**Authentication**: All protected endpoints require Bearer token authentication
 ```http
-POST /register/start
-Content-Type: application/json
-
-{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "password": "password123",
-    "password_confirmation": "password123",
-    "phone": "+1234567890",
-    "role": "passenger",
-    "gender": "male"
-}
+Authorization: Bearer {your_token}
 ```
 
-**Step 2: Verify Email**
-```http
-POST /register/verify-email
-Content-Type: application/json
+### Core Features
 
-{
-    "email": "john@example.com",
-    "code": "123456"
-}
+- **Multi-step registration** with email verification
+- **Dual-role authentication** (passengers and drivers)
+- **Ride search and matching** with advanced filters
+- **Real-time booking management**
+- **Driver offer/request system**
+- **Vehicle and location management**
+
+### Endpoint Categories
+
+- 🔐 **Authentication** - Register, login, password reset
+- 👤 **User Management** - Profile, preferences, settings
+- 🚗 **Passenger Endpoints** - Search rides, bookings, requests
+- 🚙 **Driver Endpoints** - Rides, vehicles, offers, templates
+- 📍 **Location Endpoints** - Cities, stations, institutions
+
+**[📚 View Complete API Documentation →](docs/API-docs.md)**
+
+### Example Request
+
+```bash
+# Login
+curl -X POST http://localhost:8000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "login": "user@example.com",
+    "password": "password123"
+  }'
 ```
 
-**Step 3: Finalize Registration**
-```http
-POST /register/finalize
-Content-Type: application/json
-
-{
-    "email": "john@example.com",
-    "city_id": 1,
-    "latitude": 32.461521,
-    "longitude": 35.297096
-}
-```
-
-#### Login
-```http
-POST /login
-Content-Type: application/json
-
-{
-    "login": "john@example.com",
-    "password": "password123",
-    "device_token": "optional_fcm_token"
-}
-```
-
-**Response:**
-```json
-{
-    "token": "1|xxxxxxxxxxxxxxxxxxx",
-    "user": {
-        "id": 1,
-        "name": "John Doe",
-        "email": "john@example.com",
-        "role": "passenger"
-    }
-}
-```
-
-#### Password Reset
-
-**Step 1: Send Reset Code**
-```http
-POST /fpassword/code/send
-Content-Type: application/json
-
-{
-    "email": "john@example.com"
-}
-```
-
-**Step 2: Verify Code**
-```http
-POST /fpassword/code/verify
-Content-Type: application/json
-
-{
-    "email": "john@example.com",
-    "code": "123456"
-}
-```
-
-**Step 3: Reset Password**
-```http
-POST /fpassword/code/reset
-Content-Type: application/json
-
-{
-    "email": "john@example.com",
-    "code": "123456",
-    "password": "newpassword123",
-    "password_confirmation": "newpassword123"
-}
-```
-
-### Passenger Endpoints
-
-All passenger endpoints require authentication:
-```http
-Authorization: Bearer {token}
-```
-
-#### Search Rides
-```http
-POST /passenger/search-rides
-Content-Type: application/json
-
-{
-    "passenger_latitude": 32.461521,
-    "passenger_longitude": 35.297096,
-    "institution_location_id": 5,
-    "type": "round_trip",
-    "nb_seats_requested": 2,
-    "to_institution_time_window": {
-        "start": "2024-01-20 07:00:00",
-        "end": "2024-01-20 09:00:00"
-    },
-    "from_institution_time_window": {
-        "start": "2024-01-20 15:00:00",
-        "end": "2024-01-20 17:00:00"
-    }
-}
-```
-
-#### Submit Ride Request
-```http
-POST /passenger/ride-requests
-Content-Type: application/json
-
-{
-    "passenger_latitude": 32.461521,
-    "passenger_longitude": 35.297096,
-    "institution_location_id": 5,
-    "nb_seats_requested": 1,
-    "type": "one_way",
-    "notes": "Near the main gate"
-}
-```
-
-#### Get Bookings
-```http
-GET /passenger/bookings
-```
-
-#### Accept Ride Offer
-```http
-PATCH /passenger/ride-offers/{offerId}/accept
-```
-
-#### Cancel Booking
-```http
-PATCH /passenger/bookings/{bookingId}/cancel
-```
-
-### Driver Endpoints
-
-All driver endpoints require driver authentication and verification:
-```http
-Authorization: Bearer {token}
-```
-
-#### Vehicle Management
-
-**Create Vehicle**
-```http
-POST /driver/vehicles
-Content-Type: multipart/form-data
-
-{
-    "plate_number": "ABC-1234",
-    "brand": "Toyota",
-    "color": "White",
-    "capacity": 4,
-    "images[]": [file1, file2]
-}
-```
-
-**Get All Vehicles**
-```http
-GET /driver/vehicles
-```
-
-**Update Vehicle**
-```http
-PUT /driver/vehicles/{vehicleId}
-Content-Type: application/json
-
-{
-    "brand": "Honda",
-    "color": "Blue",
-    "capacity": 5
-}
-```
-
-#### Ride Template Groups
-
-**Create Recurring Ride Template**
-```http
-POST /driver/ride-template-groups
-Content-Type: application/json
-
-{
-    "name": "Morning University Route",
-    "location_group": {
-        "passenger_locations": [1, 2, 3],
-        "institution_location": 5
-    },
-    "ride_templates": [
-        {
-            "vehicle_id": 1,
-            "scheduled_time": "07:30:00",
-            "type": "to_institution",
-            "recurring_days": ["monday", "wednesday", "friday"]
-        },
-        {
-            "vehicle_id": 1,
-            "scheduled_time": "16:00:00",
-            "type": "from_institution",
-            "recurring_days": ["monday", "wednesday", "friday"]
-        }
-    ]
-}
-```
-
-#### Ride Management
-
-**Create One-Time Ride**
-```http
-POST /driver/rides
-Content-Type: application/json
-
-{
-    "vehicle_id": 1,
-    "scheduled_time": "2024-01-20 08:00:00",
-    "type": "to_institution",
-    "location_group": {
-        "passenger_locations": [1, 2, 3],
-        "institution_location": 5
-    }
-}
-```
-
-**Start Ride**
-```http
-PATCH /driver/rides/{rideId}/start
-```
-
-**Finish Ride**
-```http
-PATCH /driver/rides/{rideId}/finish
-```
-
-#### Ride Request Management
-
-**Get Ride Requests**
-```http
-GET /driver/ride-requests
-```
-
-**Accept Ride Request**
-```http
-PATCH /driver/ride-requests/{requestId}/accept
-```
-
-**Send Custom Offer**
-```http
-POST /driver/ride-offers
-Content-Type: application/json
-
-{
-    "ride_request_id": 1,
-    "offered_price": 15.50,
-    "suggested_pickup_latitude": 32.461521,
-    "suggested_pickup_longitude": 35.297096,
-    "pickup_time": "2024-01-20 08:00:00",
-    "driver_message": "I can pick you up from the main square"
-}
-```
-
-### Location Endpoints
-
-#### Get Locations
-```http
-GET /locations?type=city
-GET /locations?type=station
-GET /locations?type=institution
-```
+**For detailed endpoint documentation, request/response examples, and authentication flows, see the [complete API documentation](docs/API-docs.md).**
 
 ## 🗄️ Database Schema
+
+### Entity Relationship Diagram
+
+![Database Schema](docs/screenshots/db.png)
+*Complete database schema showing all tables and relationships*
+
+**[📊 View Interactive Schema →](docs/schema.html)**
 
 ### Core Tables
 
@@ -473,7 +221,7 @@ GET /locations?type=institution
 - **nodes**: Multi-stop pickup/dropoff points
 - **ride_requests**: Passenger ride requests
 - **ride_offers**: Driver custom offers to passengers
-- **ratings**: User ratings and reviews
+
 
 ## 🏗️ Architecture Highlights
 
