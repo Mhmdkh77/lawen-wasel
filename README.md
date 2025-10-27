@@ -181,8 +181,6 @@ Authorization: Bearer {your_token}
 - 🚙 **Driver Endpoints** - Rides, vehicles, offers, templates
 - 📍 **Location Endpoints** - Cities, stations, institutions
 
-**[📚 View Complete API Documentation →](docs/API-docs.md)**
-
 ### Example Request
 
 ```bash
@@ -204,7 +202,7 @@ curl -X POST http://localhost:8000/api/login \
 ![Database Schema](docs/screenshots/db.png)
 *Complete database schema showing all tables and relationships*
 
-**[📊 View Interactive Schema →](docs/schema.html)**
+**[📊 View Interactive Schema →](docs/Schema.html)**
 
 ### Core Tables
 
