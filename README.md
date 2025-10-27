@@ -1,5 +1,8 @@
 # Lawen Wasel - Student Ride Sharing Platform
 
+![Laravel](https://img.shields.io/badge/Laravel-12.x-red)
+![PHP](https://img.shields.io/badge/PHP-8.2+-blue)
+
 A comprehensive Laravel-based ride-sharing platform designed specifically for university students, enabling them to find and share rides to and from their institutions. The system features a robust RESTful API, an intuitive admin panel, and advanced route optimization capabilities.
 
 ## 🌟 Key Features
