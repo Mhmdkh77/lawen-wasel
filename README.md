@@ -202,7 +202,6 @@ curl -X POST http://localhost:8000/api/login \
 ![Database Schema](docs/screenshots/db.png)
 *Complete database schema showing all tables and relationships*
 
-**[📊 View Interactive Schema →](docs/Schema.html)**
 
 ### Core Tables
 
