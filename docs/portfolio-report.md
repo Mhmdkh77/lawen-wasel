@@ -1,4 +1,4 @@
-# UniRide - Student Ride Sharing Platform
+# Lawen Wasel - Student Ride Sharing Platform
 ## Technical Portfolio Report
 
 ---
@@ -12,7 +12,6 @@ The platform consists of three main components:
 2. **Admin Dashboard** - Web-based management interface with Livewire
 3. **External Service Integration** - Google Maps and OpenRouteService APIs for geolocation and routing
 
-**Project Timeline**: Developed over 4 months (June - September 2024)
 
 ---
 
@@ -39,8 +38,8 @@ University students often struggle with:
 - Session-based authentication for admin panel
 
 **Database**
-- MySQL/PostgreSQL with complex relational schema
-- 25+ tables with sophisticated foreign key relationships
+- MySQL with complex relational schema
+- 20+ tables with sophisticated foreign key relationships
 - Support for geospatial data (latitude/longitude coordinates)
 
 **Frontend**
@@ -51,12 +50,6 @@ University students often struggle with:
 **External Services**
 - Google Maps Geocoding API (reverse geocoding)
 - OpenRouteService Optimization API (route planning)
-- Twilio SDK (SMS notifications)
-
-**Development Tools**
-- Pest PHP (testing framework)
-- Laravel Pint (code formatting)
-- Laravel Sail (Docker development environment)
 
 ### Key Features Implementation
 
@@ -71,7 +64,6 @@ University students often struggle with:
 - OpenRouteService Optimization API integration
 - Shipment-based TSP solving
 - Multi-stop pickup/dropoff sequencing
-- 25% reduction in driver travel time
 
 **3. Booking Conflict Prevention**
 - Database transactions for atomicity
@@ -93,7 +85,7 @@ University students often struggle with:
 
 ### Database Design
 
-25+ interconnected tables:
+20+ interconnected tables:
 - Core: users, passengers, drivers, vehicles
 - Routing: locations, ride_groups, location_groups, ride_templates
 - Booking: bookings, booking_groups, nodes, ride_requests, ride_offers
@@ -126,7 +118,6 @@ University students often struggle with:
 - Route caching in production
 - Config caching
 - View caching
-- Composer autoloader optimization
 
 ---
 
@@ -162,7 +153,7 @@ University students often struggle with:
 
 **Dashboard Overview**
 - Real-time statistics (users, rides, bookings)
-- Location inventory management
+- Location management
 - Activity monitoring
 
 **User Management**
@@ -174,7 +165,6 @@ University students often struggle with:
 - Ride monitoring and details
 - Route visualization with Google Maps
 - Waypoint optimization display
-- Passenger manifest viewing
 
 **Location CRUD**
 - City, station, institution management
@@ -189,28 +179,6 @@ University students often struggle with:
 
 ---
 
-## Results & Metrics
-
-**Codebase**
-- 25+ database tables with complex relationships
-- 30+ RESTful API endpoints
-- 10+ admin panel pages
-- 15+ Eloquent models
-- Multiple custom middleware
-
-**Performance**
-- Sub-second ride search queries
-- 25% travel time reduction through optimization
-- Zero double-booking incidents
-- Transaction-safe operations
-
-**Development**
-- 4-month development cycle
-- Comprehensive database design
-- Iterative feature development
-- Quality-focused implementation
-
----
 
 ## Lessons Learned
 
@@ -224,7 +192,6 @@ University students often struggle with:
 **Best Practices**
 - Start with comprehensive ERD
 - Build API-first for flexibility
-- Write tests alongside features
 - Document continuously
 - Plan for scalability upfront
 
@@ -239,7 +206,7 @@ University students often struggle with:
 
 ## Conclusion
 
-UniRide demonstrates expertise in:
+Lawen Wasel demonstrates expertise in:
 - Full-stack Laravel development (API + Admin)
 - Complex database architecture
 - RESTful API design with authentication
@@ -249,10 +216,3 @@ UniRide demonstrates expertise in:
 - Code quality and maintainability
 - Modern development practices
 
-The project showcases the ability to build production-ready, feature-rich applications solving real-world problems through thoughtful technical design.
-
----
-
-**Project Repository**: [GitHub Link]  
-**Developer**: [Your Name]  
-**Development Period**: June - September 2024 (4 months)
