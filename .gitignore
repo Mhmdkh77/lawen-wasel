@@ -1,0 +1,10 @@
+# Project materials and presentation documents
+/project_materials/
+
+# Sensitive credentials (in case placed in root)
+firebase_credentials.json
+google-services.json
+
+# Local OS files
+.DS_Store
+Thumbs.db
