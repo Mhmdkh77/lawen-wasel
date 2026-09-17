@@ -31,6 +31,9 @@ class LocationIndex extends Component
 
     public function render()
     {
+        $sortField = in_array($this->sortField, ['name', 'type', 'latitude', 'longitude', 'city_id']) ? $this->sortField : 'name';
+        $sortDirection = $this->sortDirection === 'desc' ? 'desc' : 'asc';
+
         $locations = Location::with('city')
             ->where(function ($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
@@ -39,7 +42,7 @@ class LocationIndex extends Component
                         $cityQuery->where('name', 'like', '%' . $this->search . '%');
                     });
             })
-            ->orderBy($this->sortField, $this->sortDirection)
+            ->orderBy($sortField, $sortDirection)
             ->simplePaginate(50);
 
         return view('livewire.location-index', [

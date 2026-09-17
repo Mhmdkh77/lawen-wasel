@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\Models\RideTemplate;
 use App\Models\RideGroup;
 use App\Models\Ride;
+use App\Models\Vehicle;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -57,7 +58,9 @@ class GenerateDailyRides extends Command
                 }
 
                 try {
-                    DB::transaction(function () use ($template, $driver, $locationGroup) {
+                    DB::transaction(function () use ($template, $driver, $locationGroup, $date) {
+                        $vehicle = Vehicle::find($template->vehicle_id);
+
                         $rideGroup = RideGroup::create([
                             'driver_id' => $driver->id,
                             'location_group_id' => $locationGroup->id,
@@ -66,8 +69,9 @@ class GenerateDailyRides extends Command
                         Ride::create([
                             'vehicle_id' => $template->vehicle_id,
                             'ride_group_id' => $rideGroup->id,
-                            'scheduled_time' => $template->scheduled_time,
+                            'scheduled_time' => Carbon::parse($date . ' ' . $template->scheduled_time),
                             'type' => $template->type,
+                            'available_seats' => $vehicle->capacity,
                         ]);
                     });
 

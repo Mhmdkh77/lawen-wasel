@@ -7,12 +7,12 @@ use Illuminate\Support\Facades\Storage;
 
 class FirebaseService
 {
-    protected $endpoint = 'https://fcm.googleapis.com/v1/projects/YOUR_PROJECT_ID/messages:send';
+    protected $endpoint;
     protected $accessToken;
 
     public function __construct()
     {
-        $this->accessToken = $this->getAccessToken();
+        $this->endpoint = 'https://fcm.googleapis.com/v1/projects/' . config('firebase.project_id') . '/messages:send';
     }
 
     protected function getAccessToken()
@@ -42,15 +42,20 @@ class FirebaseService
         return $response['access_token'];
     }
 
-    public function sendNotification($deviceToken, $title, $body)
+    public function sendNotification($deviceToken, $title, $body, $data = [])
     {
+        if (!$this->accessToken) {
+            $this->accessToken = $this->getAccessToken();
+        }
+
         $payload = [
             'message' => [
                 'token' => $deviceToken,
                 'notification' => [
                     'title' => $title,
                     'body' => $body,
-                ]
+                ],
+                'data' => array_map('strval', $data),
             ]
         ];
 

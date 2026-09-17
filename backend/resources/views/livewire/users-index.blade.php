@@ -23,7 +23,7 @@
                         style="width: 25%;">Name</x-table.th>
                     <x-table.th field='email' :sortField="$sortField" :sortDirection="$sortDirection"
                         style="width: 35%;">Email</x-table.th>
-                    <x-table.th field='phone_number' :sortField="$sortField" :sortDirection="$sortDirection"
+                    <x-table.th field='phone' :sortField="$sortField" :sortDirection="$sortDirection"
                         style="width: 20%;">Phone
                         Number</x-table.th>
                     <x-table.th field='city' :sortField="$sortField" :sortDirection="$sortDirection"
@@ -46,7 +46,7 @@
                             {{ $user->email }}
                         </td>
                         <td class="px-6 py-4">
-                            {{ $user->phone_number }}
+                            {{ $user->phone }}
                         </td>
                         <td class="px-6 py-4">
                             {{ $user->city?->name }}

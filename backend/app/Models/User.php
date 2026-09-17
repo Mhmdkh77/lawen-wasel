@@ -80,7 +80,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function vehicles()
     {
-        return $this->driver ? $this->driver->vehicles() : $this->hasMany(Vehicle::class, 'driver_id')->whereRaw('0=1'); // empty relation
+        return $this->hasManyThrough(Vehicle::class, Driver::class, 'user_id', 'driver_id', 'id', 'id');
     }
 
     public function city()

@@ -6,14 +6,13 @@ use App\Http\Controllers\Api\DriverRideController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\PassengerRideController;
 use App\Http\Controllers\Api\RegistrationController;
-use App\Http\Controllers\Api\TestController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\RideTemplateGroupController;
 use Illuminate\Support\Facades\Route;
 
 
 
-Route::prefix('register')->controller(RegistrationController::class)->group(function () {
+Route::prefix('register')->middleware('throttle:10,1')->controller(RegistrationController::class)->group(function () {
     // Route::post('/set-location', 'setLocation');
     Route::post('/start', 'start');
     Route::post('/verify-email', 'verifyEmail');
@@ -25,7 +24,7 @@ Route::prefix('register')->controller(RegistrationController::class)->group(func
 
 
 
-Route::controller(AuthController::class)->group(function () {
+Route::middleware('throttle:10,1')->controller(AuthController::class)->group(function () {
     Route::post("/login", "login");
 
     // Forget Pass Routes
@@ -131,7 +130,3 @@ Route::middleware('auth:sanctum')->group(function () {
         });
     });
 });
-
-
-
-Route::get('/test', [TestController::class, 'index']);
