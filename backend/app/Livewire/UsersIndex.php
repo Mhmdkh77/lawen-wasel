@@ -32,16 +32,19 @@ class UsersIndex extends Component
 
     public function render()
     {
+        $sortField = in_array($this->sortField, ['name', 'email', 'phone']) ? $this->sortField : 'name';
+        $sortDirection = $this->sortDirection === 'desc' ? 'desc' : 'asc';
+
         $users = User::where('role', $this->role)
             ->where(function ($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
                     ->orWhere('email', 'like', '%' . $this->search . '%')
-                    ->orWhere('phone_number', 'like', '%' . $this->search . '%')
+                    ->orWhere('phone', 'like', '%' . $this->search . '%')
                     ->orWhereHas('city', function ($cityQuery) {
                         $cityQuery->where('name', 'like', '%' . $this->search . '%');
                     });
             })
-            ->orderBy($this->sortField, $this->sortDirection)
+            ->orderBy($sortField, $sortDirection)
             ->with('city')
             ->simplePaginate(50);
 

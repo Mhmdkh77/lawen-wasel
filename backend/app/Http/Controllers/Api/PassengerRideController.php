@@ -327,6 +327,40 @@ class PassengerRideController extends Controller
         return response()->json($rideRequest);
     }
 
+    public function editRideRequest(Request $request, RideRequest $rideRequest)
+    {
+        $passenger = $request->user()->passenger;
+
+        if (!$passenger || $rideRequest->passenger_id !== $passenger->id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        if ($rideRequest->status !== 'pending') {
+            return response()->json(['message' => 'This ride request can no longer be edited.'], 400);
+        }
+
+        $data = $request->validate([
+            'passenger_latitude' => 'sometimes|numeric|between:-90,90',
+            'passenger_longitude' => 'sometimes|numeric|between:-180,180',
+            'passenger_location_id' => 'nullable|exists:locations,id',
+            'nb_seats_requested' => 'sometimes|integer|min:1',
+            'notes' => 'nullable|string',
+        ]);
+
+        $rideRequest->update([
+            'passenger_latitude' => $data['passenger_latitude'] ?? $rideRequest->passenger_latitude,
+            'passenger_longitude' => $data['passenger_longitude'] ?? $rideRequest->passenger_longitude,
+            'passenger_location_id' => $data['passenger_location_id'] ?? $rideRequest->passenger_location_id,
+            'nb_seats_requested' => $data['nb_seats_requested'] ?? $rideRequest->nb_seats_requested,
+            'notes' => $data['notes'] ?? $rideRequest->notes,
+        ]);
+
+        return response()->json([
+            'message' => 'Ride request updated successfully.',
+            'ride_request' => $rideRequest,
+        ]);
+    }
+
     public function cancelRideRequest(Request $request, RideRequest $rideRequest, NotificationService $notificationService)
     {
         $passenger = $request->user()->passenger;
@@ -435,6 +469,7 @@ class PassengerRideController extends Controller
                     return null;
                 }
 
+                $ride = Ride::lockForUpdate()->find($ride->id);
 
                 // Seats requested
                 $seats = $rideOffer->rideRequest->nb_seats_requested;
@@ -575,7 +610,7 @@ class PassengerRideController extends Controller
 
     public function getBooking(Request $request, Booking $booking)
     {
-        $passenger = $request->user()->passneger;
+        $passenger = $request->user()->passenger;
 
         if ($booking->passenger_id !== $passenger->id) {
             return response()->json(['error' => 'You do not have permission'], 403);
@@ -605,10 +640,15 @@ class PassengerRideController extends Controller
             $ride = $booking->ride;
             $seats = $booking->nb_seats;
 
-            $booking->update(['status' => 'passenger_canceled']);
+            $node = $booking->node;
 
-            if ($booking->node) {
-                $booking->node->delete();
+            $booking->update([
+                'status' => 'passenger_canceled',
+                'node_id' => null,
+            ]);
+
+            if ($node) {
+                $node->delete();
             }
 
             $ride->decrement('booked_seats', $seats);

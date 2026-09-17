@@ -10,6 +10,10 @@ class RideTemplate extends Model
     protected $table = 'ride_templates';
     protected $guarded = [];
 
+    protected $casts = [
+        'recurring_days' => 'array',
+    ];
+
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class);

@@ -49,7 +49,7 @@
                             {{ $user->email }}
                         </td>
                         <td class="px-6 py-4">
-                            {{ $user->phone_number }}
+                            {{ $user->phone }}
                         </td>
                         <td class="px-6 py-4">
                             {{ $user->city?->name }}

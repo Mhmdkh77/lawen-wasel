@@ -32,6 +32,8 @@ class DriversIndex extends Component
 
     public function render()
     {
+        $sortField = in_array($this->sortField, ['drivers.is_verified', 'name', 'email', 'phone']) ? $this->sortField : 'drivers.is_verified';
+        $sortDirection = $this->sortDirection === 'desc' ? 'desc' : 'asc';
 
         $users = User::where('role', $this->role)
             ->leftJoin('drivers', 'users.id', '=', 'drivers.user_id')
@@ -43,7 +45,7 @@ class DriversIndex extends Component
                         $cityQuery->where('name', 'like', '%' . $this->search . '%');
                     });
             })
-            ->orderBy($this->sortField, $this->sortDirection)
+            ->orderBy($sortField, $sortDirection)
             ->select('users.*')
             ->with(['city', 'driver'])
             ->simplePaginate(50);

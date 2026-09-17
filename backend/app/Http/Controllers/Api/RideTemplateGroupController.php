@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Models\{RideTemplateGroup, RideTemplate, LocationGroup, LocationGroupLocationRel, Ride, RideGroup};
+use App\Models\{RideTemplateGroup, RideTemplate, LocationGroup, LocationGroupLocationRel, Ride, RideGroup, Vehicle};
 
 class RideTemplateGroupController extends Controller
 {
@@ -60,10 +60,16 @@ class RideTemplateGroupController extends Controller
                     'type' => $template['type'],
                 ]);
 
+                $vehicle = Vehicle::find($rideTemplate->vehicle_id);
+
                 $startOfWeek = now()->startOfWeek();
                 foreach (range(0, 6) as $i) {
                     $date = $startOfWeek->copy()->addDays($i);
                     $dayName = strtolower($date->format('l'));
+
+                    if ($date->lt(now()->startOfDay())) {
+                        continue;
+                    }
 
                     if (in_array($dayName, $rideTemplate->recurring_days ?? [])) {
                         $rideGroup = RideGroup::create([
@@ -74,8 +80,9 @@ class RideTemplateGroupController extends Controller
                         Ride::create([
                             'vehicle_id' => $rideTemplate->vehicle_id,
                             'ride_group_id' => $rideGroup->id,
-                            'scheduled_time' => $rideTemplate->scheduled_time,
+                            'scheduled_time' => $date->copy()->setTimeFromTimeString($rideTemplate->scheduled_time),
                             'type' => $rideTemplate->type,
+                            'available_seats' => $vehicle->capacity,
                         ]);
                     }
                 }

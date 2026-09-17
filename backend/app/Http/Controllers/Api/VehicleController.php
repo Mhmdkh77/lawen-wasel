@@ -30,7 +30,7 @@ class VehicleController extends Controller
 
         $user = $request->user();
 
-        $vehicle = $user->vehicles()->create($data);
+        $vehicle = $user->driver->vehicles()->create(collect($data)->except('images')->toArray());
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
@@ -79,7 +79,7 @@ class VehicleController extends Controller
             'delete_image_ids.*' => 'integer|exists:vehicle_images,id',
         ]);
 
-        $vehicle->update($data);
+        $vehicle->update(collect($data)->except(['images', 'delete_image_ids'])->toArray());
 
         if (isset($data['delete_image_ids'])) {
             foreach ($data['delete_image_ids'] as $imageId) {

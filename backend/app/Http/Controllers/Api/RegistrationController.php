@@ -18,6 +18,10 @@ class RegistrationController extends Controller
 
     public function start(Request $request)
     {
+        Registration::whereNull('email_verified_at')
+            ->where('created_at', '<', now()->subHour())
+            ->delete();
+
         $data = $request->validate([
             'role' => 'required|in:passenger,driver',
             'name' => 'required|string|max:255',

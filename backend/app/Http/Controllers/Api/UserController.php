@@ -57,7 +57,7 @@ class UserController extends Controller
 
         $data = $request->validate($rules);
 
-        if (isset($data['default_vehicle_id'])) {
+        if (array_key_exists('default_vehicle_id', $data) && $data['default_vehicle_id'] !== null) {
             $vehicleBelongsToDriver = $user->driver->vehicles()->where('id', $data['default_vehicle_id'])->exists();
             if (!$vehicleBelongsToDriver) {
                 return response()->json(['message' => 'Invalid default vehicle selected'], 422);
@@ -155,7 +155,7 @@ class UserController extends Controller
         $user->update([
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
-            'city_id' => $request->city_id,
+            'city_id' => $city->id,
         ]);
 
         return response()->json(['message' => 'Location updated']);

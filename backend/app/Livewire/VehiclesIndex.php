@@ -31,6 +31,10 @@ class VehiclesIndex extends Component
 
     public function render()
     {
+        $allowedFields = ['driver_name', 'plate_number', 'brand', 'color', 'capacity', 'created_at'];
+        $sortField = in_array($this->sortField, $allowedFields) ? $this->sortField : 'driver_name';
+        $sortDirection = $this->sortDirection === 'asc' ? 'asc' : 'desc';
+
         $vehicles = Vehicle::query()
             ->select('vehicles.*')
             ->join('drivers', 'vehicles.driver_id', '=', 'drivers.id')
@@ -44,8 +48,8 @@ class VehiclesIndex extends Component
                 });
             })
             ->orderBy(
-                $this->sortField === 'driver_name' ? 'users.name' : 'vehicles.' . $this->sortField,
-                $this->sortDirection
+                $sortField === 'driver_name' ? 'users.name' : 'vehicles.' . $sortField,
+                $sortDirection
             )
             ->simplePaginate(20);
 

@@ -99,6 +99,7 @@ class DriverRideController extends Controller
                     return null;
                 }
 
+                $ride = Ride::lockForUpdate()->find($ride->id);
 
                 // Seats requested
                 $seats = $rideRequest->nb_seats_requested;
@@ -113,8 +114,8 @@ class DriverRideController extends Controller
                 $node = Node::create([
                     'ride_id' => $ride->id,
                     'pickup_location_id' => $rideRequest->passenger_location_id ?? null,
-                    'pickup_latitude' => $rideOffer->passenger_latitude ?? 0,
-                    'pickup_longitude' => $rideOffer->pickup_longitude ?? 0,
+                    'pickup_latitude' => $rideRequest->passenger_latitude ?? 0,
+                    'pickup_longitude' => $rideRequest->passenger_longitude ?? 0,
                     'dropoff_location_id' => $institutionLocation->id,
                     'dropoff_latitude' => $institutionLocation->latitude ?? 0,
                     'dropoff_longitude' => $institutionLocation->longitude ?? 0,
@@ -222,6 +223,20 @@ class DriverRideController extends Controller
 
         $rideRequest = RideRequest::findOrFail($request->ride_request_id);
 
+        $rides = [$rideRequest->to_inst_ride_id, $rideRequest->from_inst_ride_id];
+
+        $ownsRide = Ride::whereIn('id', $rides)
+            ->whereHas('vehicle', fn($q) => $q->where('driver_id', $driver->id))
+            ->exists();
+
+        if (!$ownsRide) {
+            return response()->json(['error' => 'You do not have permission to send an offer for this request'], 403);
+        }
+
+        if ($rideRequest->status !== 'pending') {
+            return response()->json(['error' => 'This ride request is no longer open for offers.'], 400);
+        }
+
         $offer = RideOffer::create([
             'ride_request_id' => $rideRequest->id,
             'driver_id' => $driver->id,
@@ -270,8 +285,35 @@ class DriverRideController extends Controller
         $driver = $request->user()->driver;
 
         if ($rideOffer->driver_id  != $driver->id) {
-            return response()->json(['error' => 'You do not have permission to view this Ride Offer'], 403);
+            return response()->json(['error' => 'You do not have permission to edit this Ride Offer'], 403);
         }
+
+        if ($rideOffer->status !== 'pending') {
+            return response()->json(['error' => 'This offer has already been responded to.'], 400);
+        }
+
+        $data = $request->validate([
+            'offered_price' => 'sometimes|numeric|min:0',
+            'pickup_location_id' => 'nullable|exists:locations,id',
+            'pickup_latitude' => 'nullable|numeric',
+            'pickup_longitude' => 'nullable|numeric',
+            'pickup_time' => 'nullable|date_format:Y-m-d H:i:s',
+            'driver_message' => 'nullable|string',
+        ]);
+
+        $rideOffer->update([
+            'offered_price' => $data['offered_price'] ?? $rideOffer->offered_price,
+            'suggested_pickup_location_id' => $data['pickup_location_id'] ?? $rideOffer->suggested_pickup_location_id,
+            'suggested_pickup_latitude' => $data['pickup_latitude'] ?? $rideOffer->suggested_pickup_latitude,
+            'suggested_pickup_longitude' => $data['pickup_longitude'] ?? $rideOffer->suggested_pickup_longitude,
+            'pickup_time' => $data['pickup_time'] ?? $rideOffer->pickup_time,
+            'driver_message' => $data['driver_message'] ?? $rideOffer->driver_message,
+        ]);
+
+        return response()->json([
+            'message' => 'Ride offer updated successfully',
+            'offer' => $rideOffer,
+        ]);
     }
 
 
@@ -324,7 +366,7 @@ class DriverRideController extends Controller
                 Ride::create([
                     'vehicle_id' => $request['vehicle_id'],
                     'ride_group_id' => $rideGroup->id,
-                    'scheduled_time' => $request['scheduled_time'],
+                    'scheduled_time' => now()->setTimeFromTimeString($request['scheduled_time']),
                     'type' => $request['type'],
                     'available_seats' => $vehicle->capacity,
                 ]);
@@ -346,7 +388,7 @@ class DriverRideController extends Controller
 
         $route = $locationService->getOptimizedRoute($ride);
 
-        $ride->load(['vehicle.driver', 'nodes', 'passengers', 'locations', 'bookings.node']);
+        $ride->load(['vehicle.driver', 'nodes', 'passengers', 'rideGroup.locationGroup.locations', 'bookings.node']);
 
 
 
@@ -362,8 +404,54 @@ class DriverRideController extends Controller
         $driver = $request->user()->driver;
 
         if ($ride->vehicle->driver_id !== $driver->id) {
-            return response()->json(['error' => 'You do not have permission to start this ride'], 403);
+            return response()->json(['error' => 'You do not have permission to update this ride'], 403);
         }
+
+        if ($ride->status !== 'pending') {
+            return response()->json(['error' => 'Only pending rides can be updated'], 400);
+        }
+
+        $data = $request->validate([
+            'vehicle_id' => 'sometimes|exists:vehicles,id',
+            'scheduled_time' => 'sometimes|date_format:H:i',
+            'locations' => 'sometimes|array|min:1',
+            'locations.*.id' => 'required_with:locations|exists:locations,id',
+            'locations.*.type' => 'required_with:locations|in:passenger,institution',
+        ]);
+
+        if (isset($data['vehicle_id'])) {
+            $vehicle = Vehicle::where('driver_id', $driver->id)->where('id', $data['vehicle_id'])->first();
+
+            if (!$vehicle) {
+                return response()->json(['message' => 'Vehicle not found or does not belong to the driver'], 403);
+            }
+        }
+
+        DB::transaction(function () use ($data, $ride) {
+            if (isset($data['locations'])) {
+                $locationGroup = $ride->rideGroup->locationGroup;
+
+                $locationGroup->locationGroupLocationRels()->delete();
+
+                foreach ($data['locations'] as $loc) {
+                    LocationGroupLocationRel::create([
+                        'location_group_id' => $locationGroup->id,
+                        'location_id' => $loc['id'],
+                        'location_type' => $loc['type'],
+                    ]);
+                }
+            }
+
+            $ride->update([
+                'vehicle_id' => $data['vehicle_id'] ?? $ride->vehicle_id,
+                'scheduled_time' => $data['scheduled_time'] ?? $ride->scheduled_time,
+            ]);
+        });
+
+        return response()->json([
+            'message' => 'Ride updated successfully',
+            'ride' => $ride->fresh()->load(['vehicle', 'nodes', 'rideGroup.locationGroup.locations']),
+        ]);
     }
 
     public function startRide(Request $request, Ride $ride, NotificationService $notificationService)
@@ -383,9 +471,9 @@ class DriverRideController extends Controller
             'start_time' => now()
         ]);
 
-        $ride->load([['passengers']]);
+        $ride->load('passengers');
 
-        foreach ($ride->passengers() as $passenger) {
+        foreach ($ride->passengers as $passenger) {
             // $deviceToken = $passenger?->user?->device_token;
 
             // if ($deviceToken) {
@@ -409,7 +497,7 @@ class DriverRideController extends Controller
         ]);
     }
 
-    public function finishtRide(Request $request, Ride $ride, NotificationService $notificationService)
+    public function finishRide(Request $request, Ride $ride, NotificationService $notificationService)
     {
 
         $driver = $request->user()->driver;
@@ -427,9 +515,9 @@ class DriverRideController extends Controller
             'finish_time' => now()
         ]);
 
-        $ride->load([['passengers']]);
+        $ride->load('passengers');
 
-        foreach ($ride->passengers() as $passenger) {
+        foreach ($ride->passengers as $passenger) {
             // $deviceToken = $passenger?->user?->device_token;
 
             // if ($deviceToken) {

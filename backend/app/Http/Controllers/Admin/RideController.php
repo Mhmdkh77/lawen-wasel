@@ -31,11 +31,14 @@ class RideController extends Controller
         $labeledWaypoints = [];
 
         foreach ($ride->bookings as $index => $booking) {
-            $letter = chr(65 + $index);
             $node = $booking->node;
 
+            if (!$node) {
+                continue;
+            }
+
             $labeledWaypoints[] = [
-                'label' => $letter,
+                'label' => chr(65 + $index),
                 'lat' => (float) $node->pickup_latitude,
                 'lng' => (float) $node->pickup_longitude,
                 'passenger_name' => $booking->passenger->user->name ?? 'N/A',
