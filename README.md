@@ -41,7 +41,6 @@ A comprehensive Laravel-based ride-sharing platform designed specifically for un
 - **Route Optimization**: OpenRouteService integration for multi-stop route planning
 - **Conflict Prevention**: Automatic detection of overlapping ride requests
 - **Transaction Safety**: Database transactions for data integrity
-- **Queue Support**: Background job processing for heavy operations
 - **Email Notifications**: Password reset and verification code delivery
 
 ## 🛠️ Tech Stack
@@ -54,6 +53,8 @@ A comprehensive Laravel-based ride-sharing platform designed specifically for un
 - **External APIs**:
   - Google Maps Geocoding API
   - OpenRouteService Optimization API
+  - Twilio (SMS — configured, not yet wired into active routes)
+  - Firebase Cloud Messaging (push notifications — configured, not yet wired into active routes)
 
 ## 📸 Screenshots
 
@@ -121,13 +122,23 @@ DB_PASSWORD=your_password
 ```
 
 ### 5. Configure External Services
-Add API keys to `.env`:
+Add API keys to `.env` (these variables are **not** pre-filled in `.env.example`, so add them manually):
 ```env
-# Google Maps
+# Google Maps (reverse geocoding + admin route map)
 GOOGLE_MAPS_API_KEY=your_google_maps_key
 
-# OpenRouteService
+# OpenRouteService (multi-stop route optimization)
 ORS_API_KEY=your_ors_api_key
+
+# Twilio (SMS/phone verification — currently wired but disabled in routes)
+TWILIO_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_number
+
+# Firebase Cloud Messaging (push notifications — currently disabled in controllers)
+FIREBASE_PROJECT_ID=your_firebase_project_id
+FIREBASE_CLIENT_EMAIL=your_firebase_service_account_email
+FIREBASE_PRIVATE_KEY=your_firebase_service_account_private_key
 ```
 
 ### 6. Run Migrations
@@ -139,20 +150,37 @@ php artisan migrate
 ```bash
 php artisan db:seed
 ```
+This creates a demo admin (`admin@admin.com` / `admin`) and two demo accounts (`passenger@user.com` / `driver@user.com`, both password `pass`) you can use to log in right away. Check `database/seeders/DatabaseSeeder.php` and `database/factories/AdminFactory.php` for the exact factory output.
 
-### 8. Build Frontend Assets
+### 8. Link Public Storage
+```bash
+php artisan storage:link
+```
+Required for vehicle images, profile pictures, and driver license uploads to be served over HTTP — without this, every `Storage::url()` link in the API/admin panel returns a broken path.
+
+### 9. Build Frontend Assets
 ```bash
 npm run build
 # Or for development
 npm run dev
 ```
 
-### 9. Start Development Server
+### 10. Start Development Server
 ```bash
 php artisan serve
 ```
 
 Access the application at `http://localhost:8000`
+
+### 11. (Optional) Run the Scheduler for Recurring Rides
+Ride Templates rely on a daily scheduled command (`rides:generate-daily`) to materialize the next day's rides. In local development you can trigger it manually:
+```bash
+php artisan rides:generate-daily
+```
+In production, run Laravel's scheduler via cron:
+```bash
+* * * * * php artisan schedule:run >> /dev/null 2>&1
+```
 
 ## 📱 API Documentation
 
@@ -226,11 +254,10 @@ curl -X POST http://localhost:8000/api/login \
 ## 🏗️ Architecture Highlights
 
 ### Design Patterns
-- **Repository Pattern**: Clean separation of business logic
-- **Service Layer**: LocationService for external API integration
-- **Middleware Authentication**: Role-based access control
-- **Eloquent Relationships**: Complex many-to-many and polymorphic relations
-- **Database Transactions**: Ensuring data consistency
+- **Service Layer**: `LocationService`, `NotificationService`, and `FirebaseService` for external API integration
+- **Middleware Authentication**: Role-based access control (driver, passenger, verified-driver guards)
+- **Eloquent Relationships**: `hasManyThrough` and many-to-many relations for driver/vehicle/ride ownership chains
+- **Database Transactions**: Ensuring data consistency across multi-table writes (bookings, ride creation)
 
 ### Key Algorithms
 - **Ride Matching**: Time-window based filtering with geospatial proximity
