@@ -13,11 +13,13 @@ class SidebarLink extends Component
      */
     public string $href;
     public bool $active;
+    public string $icon;
 
-    public function __construct(string $route)
+    public function __construct(string $route, string $icon = 'fa-solid fa-circle')
     {
         $this->href = route($route);
-        $this->active = request()->routeIs($route);
+        $this->active = request()->routeIs($route) || request()->routeIs($route . '.*');
+        $this->icon = $icon;
     }
 
 

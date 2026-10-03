@@ -1,3 +1,4 @@
 <x-layout>
-   <livewire:vehicles-index />
+    <x-page-header title="Vehicles" />
+    <livewire:vehicles-index />
 </x-layout>

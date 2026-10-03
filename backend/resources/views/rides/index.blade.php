@@ -1,3 +1,4 @@
 <x-layout>
-   <livewire:rides-index />
+    <x-page-header title="Rides" />
+    <livewire:rides-index />
 </x-layout>

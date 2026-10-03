@@ -1,3 +1,4 @@
 <x-layout>
-   <livewire:drivers-index />
+    <x-page-header title="Drivers" />
+    <livewire:drivers-index />
 </x-layout>

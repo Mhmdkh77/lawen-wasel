@@ -1,6 +1,6 @@
 <x-layout>
-   <div class=" bg-white p-6 rounded shadow overflow-auto">
-      <h2 class="text-2xl font-bold mb-4">Add New Location</h2>
+   <x-page-header title="Edit Location" :back="route('admin.locations.index')" />
+   <div class="p-6 overflow-auto">
       <form method="POST" action="{{ route('admin.locations.update', $location) }}">
          @include('locations._form')
       </form>
@@ -11,6 +11,5 @@
           @method('DELETE')
         </form>
      @endif
-
    </div>
 </x-layout>

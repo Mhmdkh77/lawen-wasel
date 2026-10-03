@@ -36,6 +36,14 @@ class DriverRideController extends Controller
                     });
                 });
             })
+            ->where(function ($query) use ($driver) {
+                $query->whereNull('to_inst_ride_id')
+                    ->orWhereHas('toInstRide.vehicle', fn($q) => $q->where('driver_id', $driver->id));
+            })
+            ->where(function ($query) use ($driver) {
+                $query->whereNull('from_inst_ride_id')
+                    ->orWhereHas('fromInstRide.vehicle', fn($q) => $q->where('driver_id', $driver->id));
+            })
             ->whereDoesntHave('rideOffers', function ($query) use ($driver) {
                 $query->where('driver_id', $driver->id);
             })
@@ -50,16 +58,10 @@ class DriverRideController extends Controller
     {
         $driver = $request->user()->driver;
 
-        $rides = [$rideRequest->to_inst_ride_id, $rideRequest->from_inst_ride_id];
-
-        $ownsRide = Ride::whereIn('id', $rides)
-            ->whereHas('vehicle', fn($q) => $q->where('driver_id', $driver->id))
-            ->exists();
-
-        if (!$ownsRide) {
+        if (!$this->ownsRequestRides($rideRequest, $driver->id)) {
             return response()->json(['error' => 'You do not have permission to view this request'], 403);
         }
-        $rideRequest->load(['passenger.user', 'ride', 'toInstRide', 'fromInstRide']);
+        $rideRequest->load(['passenger.user', 'toInstRide', 'fromInstRide']);
 
         return response()->json([
             'ride_request' => $rideRequest
@@ -70,6 +72,10 @@ class DriverRideController extends Controller
     public function acceptRideRequest(Request $request, RideRequest $rideRequest, NotificationService $notificationService)
     {
         $driver = $request->user()->driver;
+
+        if (!$this->ownsRequestRides($rideRequest, $driver->id)) {
+            return response()->json(['error' => 'You do not have permission to accept this request'], 403);
+        }
 
         $rideRequest->load([
             'passenger',
@@ -166,14 +172,12 @@ class DriverRideController extends Controller
     {
         $driver = $request->user()->driver;
 
-        $rides = [$rideRequest->to_inst_ride_id, $rideRequest->from_inst_ride_id];
-
-        $ownsRide = Ride::whereIn('id', $rides)
-            ->whereHas('vehicle', fn($q) => $q->where('driver_id', $driver->id))
-            ->exists();
-
-        if (!$ownsRide) {
+        if (!$this->ownsRequestRides($rideRequest, $driver->id)) {
             return response()->json(['error' => 'You do not have permission to reject this request'], 403);
+        }
+
+        if ($rideRequest->status !== 'pending') {
+            return response()->json(['error' => 'This request has already been responded to.'], 400);
         }
 
         $rideRequest->update([
@@ -223,13 +227,7 @@ class DriverRideController extends Controller
 
         $rideRequest = RideRequest::findOrFail($request->ride_request_id);
 
-        $rides = [$rideRequest->to_inst_ride_id, $rideRequest->from_inst_ride_id];
-
-        $ownsRide = Ride::whereIn('id', $rides)
-            ->whereHas('vehicle', fn($q) => $q->where('driver_id', $driver->id))
-            ->exists();
-
-        if (!$ownsRide) {
+        if (!$this->ownsRequestRides($rideRequest, $driver->id)) {
             return response()->json(['error' => 'You do not have permission to send an offer for this request'], 403);
         }
 
@@ -537,5 +535,17 @@ class DriverRideController extends Controller
             'message' => 'Ride ended successfully',
             'ride' => $ride
         ]);
+    }
+
+    private function ownsRequestRides(RideRequest $rideRequest, int $driverId): bool
+    {
+        $rideIds = array_values(array_unique(array_filter([
+            $rideRequest->to_inst_ride_id,
+            $rideRequest->from_inst_ride_id,
+        ])));
+
+        return $rideIds !== [] && Ride::whereIn('id', $rideIds)
+            ->whereHas('vehicle', fn($query) => $query->where('driver_id', $driverId))
+            ->count() === count($rideIds);
     }
 }

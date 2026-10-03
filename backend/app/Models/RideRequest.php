@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class RideRequest extends Model
 {
+    use HasFactory;
+
     protected $guarded = [];
 
     public function passenger()
@@ -36,6 +39,6 @@ class RideRequest extends Model
 
     public function rideOffers()
     {
-        return $this->hasOne(RideOffer::class);
+        return $this->hasMany(RideOffer::class);
     }
 }

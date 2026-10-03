@@ -3,11 +3,16 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AdminLoginController;
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\DriverController;
 use App\Http\Controllers\Admin\LocationController;
 use App\Http\Controllers\Admin\PassengerController;
+use App\Http\Controllers\Admin\RatingController;
 use App\Http\Controllers\Admin\RideController;
+use App\Http\Controllers\Admin\RideOfferController;
+use App\Http\Controllers\Admin\RideRequestController;
+use App\Http\Controllers\Admin\RideTemplateGroupController;
 use App\Http\Controllers\Admin\VehicleController;
 
 Route::get('/login', function () {
@@ -35,7 +40,7 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
     // Drivers
     Route::get('/drivers', [DriverController::class, 'index'])->name('drivers.index');
     Route::get('/drivers/{user}', [DriverController::class, 'show'])->name('drivers.show');
-    Route::post('/drivers/{driver}/toggle-verification', [DriverController::class, 'toggleVerification']);
+    Route::post('/drivers/{driver}/toggle-verification', [DriverController::class, 'toggleVerification'])->name('drivers.toggle-verification');
 
     // Rides
     Route::get('/rides', [RideController::class, 'index'])->name('rides.index');
@@ -48,6 +53,25 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
     // Bookings
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
+
+    // Ride Requests
+    Route::get('/ride-requests', [RideRequestController::class, 'index'])->name('ride-requests.index');
+    Route::get('/ride-requests/{rideRequest}', [RideRequestController::class, 'show'])->name('ride-requests.show');
+
+    // Ride Offers
+    Route::get('/ride-offers', [RideOfferController::class, 'index'])->name('ride-offers.index');
+    Route::get('/ride-offers/{rideOffer}', [RideOfferController::class, 'show'])->name('ride-offers.show');
+
+    // Ride Template Groups
+    Route::get('/ride-template-groups', [RideTemplateGroupController::class, 'index'])->name('ride-template-groups.index');
+    Route::get('/ride-template-groups/{rideTemplateGroup}', [RideTemplateGroupController::class, 'show'])->name('ride-template-groups.show');
+
+    // Ratings
+    Route::get('/ratings', [RatingController::class, 'index'])->name('ratings.index');
+
+    // Admin Users (read-only)
+    Route::get('/admins', [AdminUserController::class, 'index'])->name('admins.index');
+    Route::get('/admins/{admin}', [AdminUserController::class, 'show'])->name('admins.show');
 
     // Locations
     Route::get('/locations', [LocationController::class, 'index'])->name('locations.index');

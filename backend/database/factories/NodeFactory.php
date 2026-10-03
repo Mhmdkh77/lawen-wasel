@@ -2,7 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Station;
+use App\Models\Location;
+use App\Models\Ride;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,21 +18,17 @@ class NodeFactory extends Factory
      */
     public function definition(): array
     {
+        $dropoff = Location::institutions()->inRandomOrder()->first();
 
         return [
-            'latitude' => $this->faker->randomFloat(6, 33.05, 34.7),
-            'longitude' => $this->faker->randomFloat(6, 35.1, 36.6),
+            'ride_id' => Ride::factory(),
+            'pickup_location_id' => null,
+            'pickup_latitude' => $this->faker->randomFloat(6, 33.05, 34.7),
+            'pickup_longitude' => $this->faker->randomFloat(6, 35.1, 36.6),
+            'dropoff_location_id' => $dropoff->id,
+            'dropoff_latitude' => $dropoff->latitude,
+            'dropoff_longitude' => $dropoff->longitude,
+            'status' => 'pending',
         ];
     }
-
-    // public function withStation(): static
-    // {
-    //     $station = Station::inRandomOrder()->value('id');
-
-    //     return $this->state(fn(array $attributes) => [
-    //         'latitude' => $station->latitude(),
-    //         'longitude' => $station->longitude(),
-    //         'station_id' => $station
-    //     ]);
-    // }
 }

@@ -5,13 +5,13 @@ namespace App\Livewire;
 use App\Models\Ride;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Database\Eloquent\Builder;
 
 class RidesIndex extends Component
 {
     use WithPagination;
 
     public $search = '';
+    public $statusFilter = '';
     public $sortField = 'scheduled_time';
     public $sortDirection = 'asc';
     public $perPage = 10;
@@ -24,7 +24,6 @@ class RidesIndex extends Component
     public function sortBy($field)
     {
         if ($this->sortField === $field) {
-            // toggle sort direction
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
             $this->sortField = $field;
@@ -34,30 +33,36 @@ class RidesIndex extends Component
 
     public function render()
     {
-        $query = Ride::with(['driver.user', 'vehicle']);
+        $sortField = in_array($this->sortField, ['scheduled_time', 'type', 'booked_seats', 'available_seats', 'status', 'driver_name'])
+            ? $this->sortField
+            : 'scheduled_time';
+
+        $query = Ride::query()
+            ->leftJoin('vehicles', 'rides.vehicle_id', '=', 'vehicles.id')
+            ->leftJoin('drivers', 'vehicles.driver_id', '=', 'drivers.id')
+            ->leftJoin('users', 'drivers.user_id', '=', 'users.id')
+            ->select('rides.*')
+            ->with(['driver.user', 'vehicle']);
 
         if ($this->search) {
             $searchTerm = '%' . $this->search . '%';
 
             $query->where(function ($q) use ($searchTerm) {
-                $q->whereHas('driver', function ($q2) use ($searchTerm) {
-                    $q2->whereHas('user', function ($q3) use ($searchTerm) {
-                        $q3->where('name', 'like', $searchTerm);
-                    });
-                })
-                    ->orWhereHas('vehicle', function ($q4) use ($searchTerm) {
-                        $q4->where('brand', 'like', $searchTerm);
-                    })
-                    ->orWhere('type', 'like', $searchTerm)
-                    ->orWhere('status', 'like', $searchTerm);
+                $q->where('users.name', 'like', $searchTerm)
+                    ->orWhere('vehicles.brand', 'like', $searchTerm)
+                    ->orWhere('rides.type', 'like', $searchTerm)
+                    ->orWhere('rides.status', 'like', $searchTerm);
             });
         }
 
-        // Sorting on simple columns only:
-        if (in_array($this->sortField, ['scheduled_time', 'type', 'booked_seats', 'available_seats', 'status'])) {
-            $query->orderBy($this->sortField, $this->sortDirection);
-        } else if ($this->sortField === 'driver_name') {
-            // We can't sort directly by related model, so skip or do manual sorting after fetching (optional)
+        if ($this->statusFilter) {
+            $query->where('rides.status', $this->statusFilter);
+        }
+
+        if ($sortField === 'driver_name') {
+            $query->orderBy('users.name', $this->sortDirection);
+        } else {
+            $query->orderBy('rides.' . $sortField, $this->sortDirection);
         }
 
         $rides = $query->paginate($this->perPage);
