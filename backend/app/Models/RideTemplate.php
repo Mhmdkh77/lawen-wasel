@@ -14,6 +14,7 @@ class RideTemplate extends Model
 
     protected $casts = [
         'recurring_days' => 'array',
+        'last_generated_at' => 'datetime',
     ];
 
     public function vehicle()
