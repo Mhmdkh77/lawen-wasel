@@ -95,8 +95,8 @@ class LocationService
                 'Authorization' => $orsApiKey,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ])->connectTimeout(2)->timeout(5)
-                ->post('https://api.openrouteservice.org/optimization', $payload);
+            ])->connectTimeout(8)->timeout(15)
+                ->post(config('services.ors.optimization_url'), $payload);
 
             if (!$response->successful()) {
                 Log::warning('Route optimization unavailable', ['ride_id' => $ride->id, 'status' => $response->status()]);
