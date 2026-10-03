@@ -103,6 +103,12 @@ test('ride details render when route optimization cannot connect', function () {
     $this->get(route('admin.rides.show', $ride))
         ->assertOk()
         ->assertSee('Route Map')
+        ->assertSee('Driver checkpoints')
+        ->assertViewHas('routeOptimized', false)
+        ->assertViewHas('routeCheckpoints', fn($checkpoints) => count($checkpoints) === 3
+            && $checkpoints[1]['kind'] === 'pickup'
+            && $checkpoints[1]['number'] === 1
+            && $checkpoints[2]['kind'] === 'delivery')
         ->assertViewHas('orderedWaypoints', [
             ['lat' => 33.9, 'lng' => 35.5],
             ['lat' => 33.8, 'lng' => 35.4],

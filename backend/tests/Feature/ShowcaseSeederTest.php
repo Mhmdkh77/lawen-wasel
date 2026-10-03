@@ -14,6 +14,7 @@ use Database\Seeders\ShowcaseSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
 
@@ -96,4 +97,36 @@ test('showcase recurring templates generate one ride per direction for a schedul
 
     Artisan::call('app:generate-daily-rides');
     expect($todayRides->count())->toBe(2);
+});
+
+test('numbered checkpoints follow the optimized pickup and drop-off order', function () {
+    $this->seed(ShowcaseSeeder::class);
+    $this->withoutVite();
+    $this->actingAs(Admin::create([
+        'name' => 'Route Tester',
+        'email' => 'route-admin@example.test',
+        'password' => 'password',
+    ]), 'admin');
+
+    $ride = Ride::whereHas('vehicle', fn($query) => $query->where('plate_number', 'SHOW-101'))
+        ->where('type', 'to_institution')->firstOrFail();
+    $nodes = $ride->nodes()->orderByDesc('id')->get();
+    $steps = [['type' => 'start']];
+    foreach ($nodes as $node) {
+        $steps[] = ['type' => 'pickup', 'id' => $node->id];
+        $steps[] = ['type' => 'delivery', 'id' => $node->id];
+    }
+    Http::fake(fn() => Http::response(['routes' => [['steps' => $steps]]]));
+    config()->set('services.ors.key', 'test-key');
+
+    $this->get(route('admin.rides.show', $ride))
+        ->assertOk()
+        ->assertViewHas('routeOptimized', true)
+        ->assertViewHas('routeCheckpoints', fn($checkpoints) => count($checkpoints) === 9
+            && $checkpoints[1]['node_id'] === $nodes->first()->id
+            && $checkpoints[1]['kind'] === 'pickup'
+            && $checkpoints[2]['node_id'] === $nodes->first()->id
+            && $checkpoints[2]['kind'] === 'delivery'
+            && $checkpoints[8]['number'] === 8)
+        ->assertViewHas('orderedWaypoints', fn($waypoints) => count($waypoints) === 9);
 });

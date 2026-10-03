@@ -28,37 +28,45 @@ class LocationService
 
         return null;
     }
-    public function getOptimizedRoute($ride)
+    public function getOptimizedRoute($ride): array
     {
-        $ride = $ride->load('nodes', 'driver.user');
+        return $this->getRoutePlan($ride)['waypoints'];
+    }
+
+    public function getRoutePlan($ride): array
+    {
+        $ride->loadMissing('nodes', 'driver.user.city', 'bookings.passenger.user', 'bookings.node.pickupLocation', 'bookings.node.dropoffLocation');
 
         $driverLat = $ride->driver?->user?->latitude;
         $driverLng = $ride->driver?->user?->longitude;
 
         if ($driverLat === null || $driverLng === null) {
-            return [];
+            return ['waypoints' => [], 'checkpoints' => [], 'optimized' => false];
+        }
+
+        $start = [
+            'number' => 0,
+            'kind' => 'start',
+            'lat' => (float) $driverLat,
+            'lng' => (float) $driverLng,
+            'label' => 'Driver start',
+            'place' => $ride->driver->user->city?->name ?? 'Current location',
+        ];
+        $nodes = $ride->nodes->sortBy('id')->values();
+        $bookingsByNode = $ride->bookings->keyBy('node_id');
+        $fallbackActions = $nodes->flatMap(fn($node) => [
+            ['kind' => 'pickup', 'node' => $node],
+            ['kind' => 'delivery', 'node' => $node],
+        ])->all();
+        $fallbackPlan = $this->buildRoutePlan($start, $fallbackActions, $bookingsByNode, false);
+
+        if ($nodes->isEmpty()) {
+            return $fallbackPlan;
         }
 
         $shipments = [];
-        $fallbackWaypoints = [[
-            'lat' => (float) $driverLat,
-            'lng' => (float) $driverLng,
-        ]];
 
-        if ($ride->nodes->isEmpty()) {
-            return $fallbackWaypoints;
-        }
-
-        foreach ($ride->nodes as $node) {
-            $fallbackWaypoints[] = [
-                'lat' => (float) $node->pickup_latitude,
-                'lng' => (float) $node->pickup_longitude,
-            ];
-            $fallbackWaypoints[] = [
-                'lat' => (float) $node->dropoff_latitude,
-                'lng' => (float) $node->dropoff_longitude,
-            ];
-
+        foreach ($nodes as $node) {
             $shipments[] = [
                 'pickup' => [
                     'id' => $node->id,
@@ -87,7 +95,7 @@ class LocationService
         $orsApiKey = config('services.ors.key');
 
         if (!$orsApiKey) {
-            return $fallbackWaypoints;
+            return $fallbackPlan;
         }
 
         try {
@@ -100,31 +108,70 @@ class LocationService
 
             if (!$response->successful()) {
                 Log::warning('Route optimization unavailable', ['ride_id' => $ride->id, 'status' => $response->status()]);
-                return $fallbackWaypoints;
+                return $fallbackPlan;
             }
 
             $steps = data_get($response->json(), 'routes.0.steps');
 
             if (!is_array($steps) || $steps === []) {
                 Log::warning('Route optimization returned no route', ['ride_id' => $ride->id]);
-                return $fallbackWaypoints;
+                return $fallbackPlan;
             }
 
-            $orderedWaypoints = collect($steps)
-                ->filter(fn($step) => isset($step['location'][0], $step['location'][1])
-                    && is_numeric($step['location'][0]) && is_numeric($step['location'][1]))
-                ->map(fn($step) => [
-                    'lat' => (float) $step['location'][1],
-                    'lng' => (float) $step['location'][0],
-                ])
-                ->unique(fn($point) => $point['lat'] . ',' . $point['lng'])
-                ->values()
-                ->toArray();
+            $orderedSteps = collect($steps)
+                ->filter(fn($step) => in_array($step['type'] ?? null, ['pickup', 'delivery'], true))
+                ->values();
+            $expected = $nodes->flatMap(fn($node) => ['pickup:' . $node->id, 'delivery:' . $node->id])->sort()->values()->all();
+            $actual = $orderedSteps->map(fn($step) => $step['type'] . ':' . ($step['id'] ?? ''))->sort()->values()->all();
 
-            return count($orderedWaypoints) >= 2 ? $orderedWaypoints : $fallbackWaypoints;
+            if ($actual !== $expected) {
+                Log::warning('Route optimization omitted stops', ['ride_id' => $ride->id]);
+                return $fallbackPlan;
+            }
+
+            $nodesById = $nodes->keyBy('id');
+            $actions = $orderedSteps->map(fn($step) => [
+                'kind' => $step['type'],
+                'node' => $nodesById->get($step['id']),
+            ])->all();
+
+            return $this->buildRoutePlan($start, $actions, $bookingsByNode, true);
         } catch (ConnectionException $e) {
             Log::warning('Route optimization connection failed', ['ride_id' => $ride->id, 'error' => $e->getMessage()]);
-            return $fallbackWaypoints;
+            return $fallbackPlan;
         }
+    }
+
+    private function buildRoutePlan(array $start, array $actions, $bookingsByNode, bool $optimized): array
+    {
+        $checkpoints = [$start];
+
+        foreach ($actions as $action) {
+            $node = $action['node'];
+            $pickup = $action['kind'] === 'pickup';
+            $booking = $bookingsByNode->get($node->id);
+            $passenger = $booking?->passenger?->user?->name;
+            $place = $pickup ? $node->pickupLocation?->name : $node->dropoffLocation?->name;
+
+            $checkpoints[] = [
+                'number' => count($checkpoints),
+                'kind' => $action['kind'],
+                'node_id' => $node->id,
+                'lat' => (float) ($pickup ? $node->pickup_latitude : $node->dropoff_latitude),
+                'lng' => (float) ($pickup ? $node->pickup_longitude : $node->dropoff_longitude),
+                'label' => ($pickup ? 'Pick up' : 'Drop off') . ($passenger ? ' ' . $passenger : ' passenger'),
+                'place' => $place ?? ($pickup ? 'Custom pickup' : 'Custom drop-off'),
+            ];
+        }
+
+        $waypoints = [];
+        foreach ($checkpoints as $checkpoint) {
+            $point = ['lat' => $checkpoint['lat'], 'lng' => $checkpoint['lng']];
+            if ($waypoints === [] || end($waypoints) !== $point) {
+                $waypoints[] = $point;
+            }
+        }
+
+        return ['waypoints' => $waypoints, 'checkpoints' => $checkpoints, 'optimized' => $optimized];
     }
 }

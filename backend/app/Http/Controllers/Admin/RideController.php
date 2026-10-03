@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Http;
 use App\Models\Ride;
-use Illuminate\Support\Facades\Log;
 use App\Services\LocationService;
 
 class RideController extends Controller
@@ -26,29 +24,13 @@ class RideController extends Controller
 
 
 
-        $orderedWaypoints = $locationService->getOptimizedRoute($ride);
-
-        $labeledWaypoints = [];
-
-        foreach ($ride->bookings as $index => $booking) {
-            $node = $booking->node;
-
-            if (!$node) {
-                continue;
-            }
-
-            $labeledWaypoints[] = [
-                'label' => chr(65 + $index),
-                'lat' => (float) $node->pickup_latitude,
-                'lng' => (float) $node->pickup_longitude,
-                'passenger_name' => $booking->passenger->user->name ?? 'N/A',
-            ];
-        }
+        $routePlan = $locationService->getRoutePlan($ride);
 
         return view('rides.show', [
             'ride' => $ride,
-            'orderedWaypoints' => $orderedWaypoints,
-            'labeledWaypoints' => $labeledWaypoints,
+            'orderedWaypoints' => $routePlan['waypoints'],
+            'routeCheckpoints' => $routePlan['checkpoints'],
+            'routeOptimized' => $routePlan['optimized'],
         ]);
     }
 }
