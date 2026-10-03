@@ -130,7 +130,7 @@ Add these to `.env` (none of them are pre-filled in `.env.example`):
 # Google Maps (reverse geocoding + admin route map)
 GOOGLE_MAPS_API_KEY=your_google_maps_key
 
-# OpenRouteService (multi-stop route optimization)
+# OpenRouteService / HeiGIT VROOM (multi-stop route optimization)
 ORS_API_KEY=your_ors_api_key
 
 # Twilio (SMS/phone verification — configured, not yet wired into active routes)
@@ -143,6 +143,8 @@ FIREBASE_PROJECT_ID=your_firebase_project_id
 FIREBASE_CLIENT_EMAIL=your_firebase_service_account_email
 FIREBASE_PRIVATE_KEY=your_firebase_service_account_private_key
 ```
+
+For the admin ride map, enable billing, the Maps JavaScript API, and the Directions API (Legacy) for the Google key. Allow the local site's referrer (`http://127.0.0.1:8000/*` if you use that address). Reverse geocoding also uses the Geocoding API. For optimized stop order, use an OpenRouteService key with VROOM optimization access and allow the PHP server to reach `https://api.heigit.org/vroom/v0`. If optimization is unavailable, the ride page still shows the saved stops in their existing order. Restart the server after changing `.env` values; if configuration is cached, run `php artisan config:clear` first.
 
 ### 6. Run Migrations
 ```bash

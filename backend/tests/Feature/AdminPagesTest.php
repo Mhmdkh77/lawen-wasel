@@ -95,7 +95,10 @@ test('ride details render when route optimization cannot connect', function () {
     ]);
 
     config()->set('services.ors.key', 'test-key');
-    Http::fake(fn() => throw new ConnectionException('Service unavailable'));
+    Http::fake(function ($request) {
+        expect($request->url())->toBe('https://api.heigit.org/vroom/v0');
+        throw new ConnectionException('Service unavailable');
+    });
 
     $this->get(route('admin.rides.show', $ride))
         ->assertOk()
