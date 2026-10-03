@@ -15,7 +15,14 @@ class BookingController extends Controller
 
     public function show(Booking $booking)
     {
-        $booking->load(['passenger.user', 'ride.vehicle', 'ride.rideGroup.driver.user', 'node']);
+        $booking->load([
+            'passenger.user',
+            'ride.vehicle.driver.user',
+            'node.pickupLocation',
+            'node.dropoffLocation',
+            'rideRequest',
+            'bookingGroup.bookings.ride',
+        ]);
 
         return view("bookings.show", compact('booking'));
     }

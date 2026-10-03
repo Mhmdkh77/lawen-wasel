@@ -3,53 +3,53 @@
 ![Laravel](https://img.shields.io/badge/Laravel-12.x-red)
 ![PHP](https://img.shields.io/badge/PHP-8.2+-blue)
 
-A comprehensive Laravel-based ride-sharing platform designed specifically for university students, enabling them to find and share rides to and from their institutions. The system features a robust RESTful API, an intuitive admin panel, and advanced route optimization capabilities.
+A Laravel-based ride-sharing platform for university students, connecting them with drivers for trips to and from their institutions. The system ships a RESTful API for mobile clients, a Livewire-powered admin panel, and route optimization via OpenRouteService.
 
 ## 🌟 Key Features
 
 ### For Passengers
-- **Smart Ride Search**: Search for available rides with filters for time windows, seat requirements, and pickup locations
-- **Ride Requests**: Submit ride requests with specific pickup locations and institutions
-- **Negotiation System**: Receive and accept custom offers from drivers with suggested pickup points and pricing
+- **Smart Ride Search**: Search available rides by arrival/return time windows, seat count, and institution
+- **Ride Requests**: Submit ride requests with a pickup location and institution destination
+- **Negotiation System**: Receive and accept custom driver offers with suggested pickup points and pricing
 - **Booking Management**: Track active bookings, view ride details, and cancel reservations
-- **Multi-Stop Support**: Automated pickup and dropoff point optimization
+- **Multi-Stop Support**: Rides pool multiple passengers per vehicle with per-passenger pickup/dropoff nodes
 
 ### For Drivers
 - **Vehicle Management**: Register and manage multiple vehicles with image galleries
-- **Ride Templates**: Create recurring ride schedules for regular routes (daily, weekly patterns)
-- **Dynamic Ride Creation**: Set up one-time or recurring rides with customizable capacity and pricing
-- **Ride Request Handling**: Review incoming passenger requests and accept/reject based on route compatibility
+- **Ride Templates**: Define recurring weekly schedules that auto-generate rides via a daily scheduled job
+- **Dynamic Ride Creation**: Set up one-time rides with a specific vehicle, time, and stop list
+- **Ride Request Handling**: Review incoming passenger requests and accept/reject them
 - **Custom Offers**: Send personalized ride offers with suggested pickup locations and pricing
-- **Route Optimization**: Automatic multi-stop route optimization using OpenRouteService API
-- **Driver Verification**: Verification system to ensure driver authenticity
+- **Route Optimization**: Multi-stop route ordering via the OpenRouteService optimization API
+- **Driver Verification**: Admin-gated verification before a driver can publish rides or templates
 
 ### Admin Panel
-- **Dashboard Analytics**: Comprehensive overview of users, rides, bookings, and locations
+- **Dashboard Analytics**: Overview of users, rides, bookings, and locations
 - **User Management**: Monitor and manage both passengers and drivers
-- **Driver Verification**: Toggle driver verification status with document review
+- **Driver Verification**: Toggle driver verification status
 - **Location Management**: CRUD operations for cities, stations, and institutions
-- **Ride Monitoring**: View ride details, routes, and booking information
-- **Vehicle Oversight**: Review registered vehicles and their documentation
+- **Ride Monitoring**: View ride details, optimized routes, and booking information
+- **Vehicle Oversight**: Review registered vehicles and their images
 - **Booking Tracking**: Monitor active and historical bookings
 
 ### Technical Features
-- **Multi-Step Registration**: Secure registration with email verification codes
-- **Role-Based Access Control**: Separate authentication guards for users and admins
-- **API Authentication**: Laravel Sanctum for secure token-based authentication
-- **Geolocation Support**: GPS coordinates for accurate pickup/dropoff locations
-- **Google Maps Integration**: Reverse geocoding for address resolution
+- **Multi-Step Registration**: Email-verification-code flow before account creation
+- **Role-Based Access Control**: Separate `driver`/`passenger` middleware guards, plus a distinct admin auth guard
+- **API Authentication**: Laravel Sanctum for token-based mobile API auth
+- **Geolocation Support**: GPS coordinates on users, locations, and ride pickup/dropoff nodes
+- **Google Maps Integration**: Reverse geocoding and admin-side route visualization
 - **Route Optimization**: OpenRouteService integration for multi-stop route planning
-- **Conflict Prevention**: Automatic detection of overlapping ride requests
-- **Transaction Safety**: Database transactions for data integrity
-- **Email Notifications**: Password reset and verification code delivery
+- **Conflict Prevention**: Detects duplicate/overlapping ride requests per passenger
+- **Transaction Safety**: Database transactions and row locking around booking/seat updates
+- **Email Notifications**: Verification codes and password-reset codes via Mail
 
 ## 🛠️ Tech Stack
 
 - **Framework**: Laravel 12.x
 - **PHP Version**: 8.2+
-- **Authentication**: Laravel Sanctum (API), Session-based (Admin)
-- **Frontend**: Livewire 3.6 (Admin Panel)
-- **Database**: MySQL/PostgreSQL
+- **Authentication**: Laravel Sanctum (API), session-based guard (Admin)
+- **Frontend**: Livewire 3.6 + Tailwind CSS (Admin Panel)
+- **Database**: SQLite by default (`.env.example`); MySQL/PostgreSQL supported
 - **External APIs**:
   - Google Maps Geocoding API
   - OpenRouteService Optimization API
@@ -78,17 +78,16 @@ A comprehensive Laravel-based ride-sharing platform designed specifically for un
 ![Ride Details](docs/screenshots/ride_page.png)
 *Ride management interface with real-time route visualization using Google Maps and optimized waypoints*
 
-
-
-
 ## 📋 Prerequisites
 
 - PHP 8.2 or higher
 - Composer
-- MySQL/PostgreSQL database
-- Node.js and NPM (for frontend assets)
+- SQLite (default) or MySQL/PostgreSQL
+- Node.js and NPM (for admin panel frontend assets)
 - Google Maps API Key
 - OpenRouteService API Key
+- *(Optional)* Twilio account — for SMS features once wired up
+- *(Optional)* Firebase project — for push notifications once wired up
 
 ## 🚀 Installation
 
@@ -110,8 +109,12 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-### 4. Configure Database
-Edit `.env` file with your database credentials:
+### 4. Configure the Database
+`.env.example` defaults to SQLite, which needs no extra setup — just make sure the database file exists:
+```bash
+touch database/database.sqlite
+```
+To use MySQL/PostgreSQL instead, edit `.env`:
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -122,7 +125,7 @@ DB_PASSWORD=your_password
 ```
 
 ### 5. Configure External Services
-Add API keys to `.env` (these variables are **not** pre-filled in `.env.example`, so add them manually):
+Add these to `.env` (none of them are pre-filled in `.env.example`):
 ```env
 # Google Maps (reverse geocoding + admin route map)
 GOOGLE_MAPS_API_KEY=your_google_maps_key
@@ -130,12 +133,12 @@ GOOGLE_MAPS_API_KEY=your_google_maps_key
 # OpenRouteService (multi-stop route optimization)
 ORS_API_KEY=your_ors_api_key
 
-# Twilio (SMS/phone verification — currently wired but disabled in routes)
+# Twilio (SMS/phone verification — configured, not yet wired into active routes)
 TWILIO_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_PHONE_NUMBER=your_twilio_number
 
-# Firebase Cloud Messaging (push notifications — currently disabled in controllers)
+# Firebase Cloud Messaging (push notifications — configured, not yet wired into active routes)
 FIREBASE_PROJECT_ID=your_firebase_project_id
 FIREBASE_CLIENT_EMAIL=your_firebase_service_account_email
 FIREBASE_PRIVATE_KEY=your_firebase_service_account_private_key
@@ -146,137 +149,114 @@ FIREBASE_PRIVATE_KEY=your_firebase_service_account_private_key
 php artisan migrate
 ```
 
-### 7. Seed Database (Optional)
+### 7. Seed the Database (Optional, recommended for a working demo)
 ```bash
 php artisan db:seed
 ```
-This creates a demo admin (`admin@admin.com` / `admin`) and two demo accounts (`passenger@user.com` / `driver@user.com`, both password `pass`) you can use to log in right away. Check `database/seeders/DatabaseSeeder.php` and `database/factories/AdminFactory.php` for the exact factory output.
+Creates a demo admin (`admin@admin.com` / `admin`) plus a demo passenger (`passenger@user.com` / `pass`) and a demo driver (`driver@user.com` / `pass`), along with sample locations, vehicles, and rides. See `database/seeders/DatabaseSeeder.php`.
 
 ### 8. Link Public Storage
 ```bash
 php artisan storage:link
 ```
-Required for vehicle images, profile pictures, and driver license uploads to be served over HTTP — without this, every `Storage::url()` link in the API/admin panel returns a broken path.
+Required for vehicle images, profile pictures, and driver license uploads to resolve to a working URL.
 
 ### 9. Build Frontend Assets
 ```bash
 npm run build
-# Or for development
+# or, for development with hot reload:
 npm run dev
 ```
 
-### 10. Start Development Server
+### 10. Start the Development Server
 ```bash
 php artisan serve
 ```
+Access the admin panel at `http://localhost:8000/admin/login`. The app has no page at `/`.
 
-Access the application at `http://localhost:8000`
-
-### 11. (Optional) Run the Scheduler for Recurring Rides
-Ride Templates rely on a daily scheduled command (`rides:generate-daily`) to materialize the next day's rides. In local development you can trigger it manually:
+### 11. (Optional) Enable Recurring Ride Generation
+Driver-defined Ride Templates rely on a daily scheduled command to materialize the next day's rides:
 ```bash
-php artisan rides:generate-daily
+php artisan rides:generate-daily   # run manually, or:
 ```
-In production, run Laravel's scheduler via cron:
 ```bash
+# crontab, for production
 * * * * * php artisan schedule:run >> /dev/null 2>&1
 ```
 
 ## 📱 API Documentation
 
-The platform provides a comprehensive RESTful API with 30+ endpoints for seamless integration.
+The platform exposes a RESTful JSON API for the mobile clients.
 
 ### Quick Start
 
 **Base URL**: `http://localhost:8000/api`
 
-**Authentication**: All protected endpoints require Bearer token authentication
+**Authentication**: protected endpoints require a Sanctum bearer token
 ```http
 Authorization: Bearer {your_token}
 ```
 
-### Core Features
-
-- **Multi-step registration** with email verification
-- **Dual-role authentication** (passengers and drivers)
-- **Ride search and matching** with advanced filters
-- **Real-time booking management**
-- **Driver offer/request system**
-- **Vehicle and location management**
-
 ### Endpoint Categories
 
-- 🔐 **Authentication** - Register, login, password reset
-- 👤 **User Management** - Profile, preferences, settings
-- 🚗 **Passenger Endpoints** - Search rides, bookings, requests
-- 🚙 **Driver Endpoints** - Rides, vehicles, offers, templates
-- 📍 **Location Endpoints** - Cities, stations, institutions
+- 🔐 **Authentication** — register (multi-step), login, password reset
+- 👤 **User** — profile, password change, logout
+- 🚗 **Passenger** — search rides, ride requests, ride offers, bookings
+- 🚙 **Driver** — vehicles, ride templates, ride requests/offers, rides
+- 📍 **Locations** — cities, stations, institutions
 
 ### Example Request
 
 ```bash
-# Login
 curl -X POST http://localhost:8000/api/login \
   -H "Content-Type: application/json" \
   -d '{
-    "login": "user@example.com",
-    "password": "password123"
+    "login": "passenger@user.com",
+    "password": "pass"
   }'
 ```
 
-**For detailed endpoint documentation, request/response examples, and authentication flows, see the [complete API documentation](docs/API-docs.md).**
+**For full endpoint documentation, see [docs/API-docs.md](docs/API-docs.md).**
 
 ## 🗄️ Database Schema
 
-### Entity Relationship Diagram
-
 ![Database Schema](docs/screenshots/db.png)
 *Complete database schema showing all tables and relationships*
-
 
 ### Core Tables
 
 - **users**: User accounts (passengers and drivers)
 - **admins**: Admin panel users
-- **passengers**: Passenger-specific data
-- **drivers**: Driver profiles and verification status
-- **vehicles**: Driver vehicles with specifications
+- **passengers** / **drivers**: Role-specific profile data
+- **vehicles** / **vehicle_images**: Driver vehicles and their photos
 - **locations**: Cities, stations, and institutions with GPS coordinates
-- **rides**: Individual ride instances
-- **ride_groups**: Groups rides by route and driver
-- **ride_templates**: Recurring ride schedules
-- **bookings**: Passenger seat reservations
-- **nodes**: Multi-stop pickup/dropoff points
-- **ride_requests**: Passenger ride requests
-- **ride_offers**: Driver custom offers to passengers
-
+- **rides** / **ride_groups**: Individual ride instances, grouped by route + driver
+- **ride_templates** / **ride_template_groups**: Recurring schedules drivers define once
+- **ride_requests** / **ride_offers**: The passenger-request / driver-offer negotiation flow
+- **bookings** / **booking_groups**: Confirmed seat reservations
+- **nodes**: Per-booking pickup/dropoff points used for route optimization
 
 ## 🏗️ Architecture Highlights
 
 ### Design Patterns
-- **Service Layer**: `LocationService`, `NotificationService`, and `FirebaseService` for external API integration
-- **Middleware Authentication**: Role-based access control (driver, passenger, verified-driver guards)
-- **Eloquent Relationships**: `hasManyThrough` and many-to-many relations for driver/vehicle/ride ownership chains
-- **Database Transactions**: Ensuring data consistency across multi-table writes (bookings, ride creation)
+- **Service Layer**: `LocationService` (geocoding, route optimization), `NotificationService` / `FirebaseService` (push notifications)
+- **Middleware Authentication**: `driver`, `driver-verified`, and `passenger` route middleware; a separate `admin` auth guard for the panel
+- **Eloquent Relationships**: `hasManyThrough` for driver → vehicle → ride ownership chains; many-to-many for location groups
+- **Database Transactions**: Booking/ride creation wraps multi-table writes in transactions with row locking on seat counts
 
 ### Key Algorithms
-- **Ride Matching**: Time-window based filtering with geospatial proximity
-- **Route Optimization**: Shipment-based TSP solving via OpenRouteService
-- **Conflict Detection**: Prevents overlapping bookings for passengers
-- **Dynamic Seat Calculation**: Real-time availability tracking
+- **Ride Matching**: Time-window filtering (±1 hour) plus institution/city matching
+- **Route Optimization**: Shipment-based routing via the OpenRouteService optimization API
+- **Conflict Detection**: Prevents a passenger from double-booking overlapping rides
+- **Seat Tracking**: `available_seats`/`booked_seats` kept in sync via transactional increments/decrements
 
 ### Security Features
 - Password hashing (bcrypt)
-- API token authentication
-- CSRF protection
-- SQL injection prevention (Eloquent ORM)
-- XSS protection
-- Email verification
-
-
-
-
-
+- Sanctum API token authentication
+- CSRF protection (admin panel)
+- Eloquent ORM parameter binding (SQL injection prevention)
+- Rate-limited auth/registration endpoints
+- Email verification before account activation
 
 ## 📂 Project Structure
 
@@ -286,9 +266,11 @@ app/
 │   ├── Controllers/
 │   │   ├── Api/              # API Controllers
 │   │   └── Admin/            # Admin Panel Controllers
-│   └── Middleware/           # Custom Middleware
+│   ├── Middleware/           # Custom Middleware
+│   └── Livewire/             # Admin panel Livewire components
 ├── Models/                   # Eloquent Models
 ├── Services/                 # Business Logic Services
+├── Policies/                 # Authorization policies
 └── Mail/                     # Email Templates
 
 database/
@@ -298,8 +280,16 @@ database/
 
 routes/
 ├── api.php                   # API Routes
-└── web.php                   # Admin Panel Routes
+├── web.php                   # Admin Panel Routes
+└── console.php                # Scheduled commands
 
 resources/
 └── views/                    # Blade Templates (Admin Panel)
 ```
+
+## 🧪 Running Tests
+
+```bash
+php artisan test
+```
+The feature tests cover the login entry point, admin page rendering, driver ride-request access and acceptance, and multiple offers on a passenger request. Broader API coverage is still needed.

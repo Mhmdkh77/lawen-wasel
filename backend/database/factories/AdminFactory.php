@@ -20,10 +20,11 @@ class AdminFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => 'admin',
-            'email' => 'admin@admin.com',
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => Hash::make('admin'),
+            'password' => Hash::make('password'),
+            'gender' => fake()->randomElement(['male', 'female']),
             'remember_token' => Str::random(10),
         ];
     }

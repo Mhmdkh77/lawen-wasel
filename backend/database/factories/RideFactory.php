@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\RideGroup;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,21 +18,18 @@ class RideFactory extends Factory
      */
     public function definition(): array
     {
-        $driver = User::drivers()->inRandomOrder()->first(); // Get random driver
-        $vehicle = Vehicle::where('driver_id', $driver->id)->inRandomOrder()->first(); // Get random vehicle for the choosen driver
-
-        // Random date and time
-        $baseDate = $this->faker->dateTimeBetween('now', '+2 weeks');
-        $arrivalHour = $this->faker->randomElement([8, 9, 10]);
-        $arrivalDateTime = \Carbon\Carbon::instance($baseDate)->setTime($arrivalHour, 0, 0);
+        $vehicle = Vehicle::inRandomOrder()->first() ?? Vehicle::factory()->create();
+        $capacity = $vehicle->capacity;
+        $bookedSeats = fake()->numberBetween(0, $capacity);
 
         return [
-            'driver_id' => $driver->id,
             'vehicle_id' => $vehicle->id,
-            'start_time' => fake()->dateTime(),
-            'finish_time' => fake()->dateTime(),
-            'arrival_time' => $arrivalDateTime,
-            'status' => fake()->randomElement(['pending', 'active',  'completed'])
+            'ride_group_id' => RideGroup::factory(),
+            'scheduled_time' => fake()->dateTimeBetween('-2 weeks', '+2 weeks'),
+            'type' => fake()->randomElement(['to_institution', 'from_institution']),
+            'booked_seats' => $bookedSeats,
+            'available_seats' => $capacity - $bookedSeats,
+            'status' => fake()->randomElement(['pending', 'active', 'completed', 'canceled']),
         ];
     }
 }

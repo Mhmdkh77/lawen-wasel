@@ -16,28 +16,25 @@ class RatingFactory extends Factory
      *
      * @return array<string, mixed>
      */
-
-
     public function definition(): array
     {
-        $ride = Ride::where('status', '=', 'completed')->inRandomOrder()->first(); // Get random ride
-        $driver = $ride->driver_id; // Get ride driver
-        $passengers = $ride->passengers()->pluck('users.id')->toArray(); // Get ride passengers
+        $ride = Ride::where('status', '=', 'completed')->whereHas('bookings')->inRandomOrder()->first();
+        $driverUserId = $ride->driver->user_id;
+        $passengerUserIds = $ride->passengers()->pluck('passengers.user_id')->toArray();
 
-        // get passenger that did not rate before
-        $passenger = User::whereIn('id', $passengers)->whereNotIn('id', function ($query) use ($driver, $ride) {
+        $passenger = User::whereIn('id', $passengerUserIds)->whereNotIn('id', function ($query) use ($driverUserId, $ride) {
             $query->select('rating_user_id')
                 ->from('ratings')
-                ->where('rated_user_id', $driver)
+                ->where('rated_user_id', $driverUserId)
                 ->where('ride_id', $ride->id);
         })->inRandomOrder()->first();
 
         return [
-            'rated_user_id' => $driver,
+            'rated_user_id' => $driverUserId,
             'rating_user_id' => $passenger->id,
             'ride_id' => $ride->id,
-            'rating' => fake()->numberBetween(0, 5),
-            'review_text' => fake()->realText()
+            'rating' => fake()->numberBetween(1, 5),
+            'review_text' => fake()->realText(),
         ];
     }
 }

@@ -12,6 +12,40 @@
         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
         "Noto Color Emoji";
 
-    --color-yellow: #ffcf36;
-    --color-black: #334148;
+    /* Brand accent (the app's existing yellow, promoted to a full scale) */
+    --color-brand-50: #fffbea;
+    --color-brand-100: #fff3c4;
+    --color-brand-300: #ffe28a;
+    --color-brand-400: #ffdb6b;
+    --color-brand-500: #ffcf36;
+    --color-brand-600: #e0ad14;
+    --color-brand-700: #b3890f;
+
+    /* Ink (dark neutral) scale, the app's existing charcoal */
+    --color-ink-900: #1f2933;
+    --color-ink-800: #334148;
+    --color-ink-700: #47565e;
+    --color-ink-100: #eef1f2;
+
+    /* Semantic status colors, consumed by <x-status-badge> */
+    --color-status-pending-bg: #fef3c7;
+    --color-status-pending-text: #92400e;
+    --color-status-active-bg: #dbeafe;
+    --color-status-active-text: #1e40af;
+    --color-status-completed-bg: #dcfce7;
+    --color-status-completed-text: #166534;
+    --color-status-cancelled-bg: #fee2e2;
+    --color-status-cancelled-text: #991b1b;
+    --color-status-rejected-bg: #fee2e2;
+    --color-status-rejected-text: #991b1b;
+    --color-status-verified-bg: #dcfce7;
+    --color-status-verified-text: #166534;
+    --color-status-unverified-bg: #f1f5f9;
+    --color-status-unverified-text: #475569;
+    --color-status-expired-bg: #f1f5f9;
+    --color-status-expired-text: #475569;
+}
+
+[x-cloak] {
+    display: none !important;
 }

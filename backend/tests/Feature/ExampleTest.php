@@ -1,7 +1,5 @@
 <?php
 
-test('the application returns a successful response', function () {
-    $response = $this->get('/');
-
-    $response->assertStatus(200);
+test('the login entry point redirects to the admin login page', function () {
+    $this->get('/login')->assertRedirect(route('admin.login'));
 });

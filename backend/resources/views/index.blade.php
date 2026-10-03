@@ -1,43 +1,23 @@
 <x-layout>
+    <x-page-header title="Dashboard" />
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-10 text-white">
-        <div class="bg-black px-6 py-10 rounded flex justify-between items-center">
-            <span>Users</span>
-            <p>{{ $users_count }}</p>
-        </div>
-        <div class="bg-black px-6 py-10 rounded flex justify-between items-center">
-            <span>Passengers</span>
-            <p>{{ $passengers_count }}</p>
-        </div>
-        <div class="bg-black px-6 py-10 rounded flex justify-between items-center">
-            <span>Drivers</span>
-            <p>{{ $drivers_count }}</p>
-        </div>
-        <div class="bg-black px-6 py-10 rounded flex justify-between items-center">
-            <span>Vehicls</span>
-            <p>{{ $vehicles_count }}</p>
-        </div>
-
-        <div class="bg-black px-6 py-10 rounded flex justify-between items-center">
-            <span>Rides</span>
-            <p>{{ $rides_count }}</p>
-        </div>
-        <div class="bg-black px-6 py-10 rounded flex justify-between items-center">
-            <span>Bookings</span>
-            <p>{{ $bookings_count }}</p>
-        </div>
-        <div class="bg-black px-6 py-10 rounded flex justify-between items-center">
-            <span>Cities</span>
-            <p>{{ $cities_count }}</p>
-        </div>
-        <div class="bg-black px-6 py-10 rounded flex justify-between items-center">
-            <span>Stations</span>
-            <p>{{ $stations_count }}</p>
-        </div>
-        <div class="bg-black px-6 py-10 rounded flex justify-between items-center">
-            <span>Institutions</span>
-            <p>{{ $institutions_count }}</p>
-        </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+        <x-stat-card label="Users" :value="$users_count" icon="fa-solid fa-users" />
+        <x-stat-card label="Passengers" :value="$passengers_count" icon="fa-solid fa-user"
+            :href="route('admin.passengers.index')" />
+        <x-stat-card label="Drivers" :value="$drivers_count" icon="fa-solid fa-id-card"
+            :href="route('admin.drivers.index')" />
+        <x-stat-card label="Vehicles" :value="$vehicles_count" icon="fa-solid fa-car"
+            :href="route('admin.vehicles.index')" />
+        <x-stat-card label="Rides" :value="$rides_count" icon="fa-solid fa-route"
+            :href="route('admin.rides.index')" />
+        <x-stat-card label="Active Bookings" :value="$bookings_count" icon="fa-solid fa-ticket"
+            :href="route('admin.bookings.index')" />
+        <x-stat-card label="Cities" :value="$cities_count" icon="fa-solid fa-city"
+            :href="route('admin.locations.index')" />
+        <x-stat-card label="Stations" :value="$stations_count" icon="fa-solid fa-train-subway"
+            :href="route('admin.locations.index')" />
+        <x-stat-card label="Institutions" :value="$institutions_count" icon="fa-solid fa-building-columns"
+            :href="route('admin.locations.index')" />
     </div>
-
 </x-layout>

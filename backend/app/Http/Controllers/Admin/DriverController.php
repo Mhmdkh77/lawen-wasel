@@ -21,7 +21,7 @@ class DriverController extends Controller
             abort(404, 'Driver not found.');
         }
 
-        $user->load(['city', 'driver']);
+        $user->load(['city', 'driver.vehicles']);
 
         return view("drivers.show", ['user' => $user]);
     }

@@ -8,3 +8,6 @@ google-services.json
 # Local OS files
 .DS_Store
 Thumbs.db
+
+# Local browser test output
+/.playwright-mcp/
