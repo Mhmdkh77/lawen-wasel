@@ -70,7 +70,7 @@
       </div>
 
       <div class="bg-white p-4 rounded-lg border border-gray-200">
-         <h3 class="font-semibold text-ink-900 mb-3">Optimized Route</h3>
+         <h3 class="font-semibold text-ink-900 mb-3">Route Map</h3>
          <div id="map" class="w-full h-[500px] rounded-lg border border-gray-200"></div>
       </div>
    </div>
@@ -81,10 +81,20 @@
       const driverLocation = waypoints[0];
 
       function initMap() {
+         if (!driverLocation) {
+            document.getElementById('map').textContent = 'No route coordinates available.';
+            return;
+         }
+
          const map = new google.maps.Map(document.getElementById("map"), {
             center: driverLocation,
             zoom: 10,
          });
+
+         if (waypoints.length === 1) {
+            new google.maps.Marker({ map, position: driverLocation });
+            return;
+         }
 
          const directionsService = new google.maps.DirectionsService();
          const directionsRenderer = new google.maps.DirectionsRenderer({ map });

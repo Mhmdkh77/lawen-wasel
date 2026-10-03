@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -29,21 +30,35 @@ class LocationService
     }
     public function getOptimizedRoute($ride)
     {
-        $ride = $ride->load('nodes', 'driver');
+        $ride = $ride->load('nodes', 'driver.user');
 
-        $driverLat = $ride->driver->user->latitude;
-        $driverLng = $ride->driver->user->longitude;
+        $driverLat = $ride->driver?->user?->latitude;
+        $driverLng = $ride->driver?->user?->longitude;
+
+        if ($driverLat === null || $driverLng === null) {
+            return [];
+        }
 
         $shipments = [];
+        $fallbackWaypoints = [[
+            'lat' => (float) $driverLat,
+            'lng' => (float) $driverLng,
+        ]];
 
         if ($ride->nodes->isEmpty()) {
-            return [[
-                'lat' => $driverLat,
-                'lng' => $driverLng,
-            ]]; // Just return driver's start location
+            return $fallbackWaypoints;
         }
 
         foreach ($ride->nodes as $node) {
+            $fallbackWaypoints[] = [
+                'lat' => (float) $node->pickup_latitude,
+                'lng' => (float) $node->pickup_longitude,
+            ];
+            $fallbackWaypoints[] = [
+                'lat' => (float) $node->dropoff_latitude,
+                'lng' => (float) $node->dropoff_longitude,
+            ];
+
             $shipments[] = [
                 'pickup' => [
                     'id' => $node->id,
@@ -69,31 +84,47 @@ class LocationService
             'shipments' => $shipments
         ];
 
-        $orsApiKey = env('ORS_API_KEY');
+        $orsApiKey = config('services.ors.key');
+
+        if (!$orsApiKey) {
+            return $fallbackWaypoints;
+        }
 
         try {
             $response = Http::withHeaders([
                 'Authorization' => $orsApiKey,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ])->post('https://api.openrouteservice.org/optimization', $payload);
+            ])->connectTimeout(2)->timeout(5)
+                ->post('https://api.openrouteservice.org/optimization', $payload);
 
-            $data = $response->json();
-            $optimizedRoute = $data['routes'][0] ?? null;
-            $orderedWaypoints = collect($optimizedRoute['steps'])->map(function ($step) {
-                return ['lat' => $step['location'][1], 'lng' => $step['location'][0]];
-            })->unique(fn($item) => $item['lat'] . ',' . $item['lng'])->values()->toArray();
+            if (!$response->successful()) {
+                Log::warning('Route optimization unavailable', ['ride_id' => $ride->id, 'status' => $response->status()]);
+                return $fallbackWaypoints;
+            }
 
-            return $orderedWaypoints;
-        } catch (\Exception $e) {
-            // Catch all exceptions for comprehensive logging
-            Log::error('Exception caught during ORS optimization for ride ID: ' . $ride->id . ': ' . $e->getMessage(), [
-                'exception_class' => get_class($e),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            abort(500, 'An unexpected error occurred during route optimization.');
+            $steps = data_get($response->json(), 'routes.0.steps');
+
+            if (!is_array($steps) || $steps === []) {
+                Log::warning('Route optimization returned no route', ['ride_id' => $ride->id]);
+                return $fallbackWaypoints;
+            }
+
+            $orderedWaypoints = collect($steps)
+                ->filter(fn($step) => isset($step['location'][0], $step['location'][1])
+                    && is_numeric($step['location'][0]) && is_numeric($step['location'][1]))
+                ->map(fn($step) => [
+                    'lat' => (float) $step['location'][1],
+                    'lng' => (float) $step['location'][0],
+                ])
+                ->unique(fn($point) => $point['lat'] . ',' . $point['lng'])
+                ->values()
+                ->toArray();
+
+            return count($orderedWaypoints) >= 2 ? $orderedWaypoints : $fallbackWaypoints;
+        } catch (ConnectionException $e) {
+            Log::warning('Route optimization connection failed', ['ride_id' => $ride->id, 'error' => $e->getMessage()]);
+            return $fallbackWaypoints;
         }
     }
 }
