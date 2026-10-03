@@ -16,5 +16,6 @@ class DatabaseSeeder extends Seeder
         Location::factory(20)->create(); // create stations
 
         $this->call(AdminDemoSeeder::class);
+        $this->call(ShowcaseSeeder::class);
     }
 }

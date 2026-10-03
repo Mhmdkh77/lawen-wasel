@@ -157,6 +157,14 @@ php artisan db:seed
 ```
 Creates a demo admin (`admin@admin.com` / `admin`) plus a demo passenger (`passenger@user.com` / `pass`) and a demo driver (`driver@user.com` / `pass`), along with sample locations, vehicles, and rides. See `database/seeders/DatabaseSeeder.php`.
 
+The seed also adds a named showcase around Nabatieh: a five-seat, four-booking campus route; linked outbound and return bookings; a full active ride; a completed ride with reviews; a canceled ride; competing driver offers; requests in several statuses; vehicle photos; and active and paused recurring templates. Look for `SHOW-` vehicle plates and `Showcase |` template groups in the admin panel. Showcase users have `showcase.<name>@example.test` emails and the demo password `pass`.
+
+To add only these connected scenarios to an existing database, without re-running the random demo seed, use:
+```bash
+php artisan db:seed --class=ShowcaseSeeder
+```
+The showcase seeder can be run again without duplicating its records.
+
 ### 8. Link Public Storage
 ```bash
 php artisan storage:link
@@ -179,7 +187,7 @@ Access the admin panel at `http://localhost:8000/admin/login`. The app has no pa
 ### 11. (Optional) Enable Recurring Ride Generation
 Driver-defined Ride Templates rely on a daily scheduled command to materialize the next day's rides:
 ```bash
-php artisan rides:generate-daily   # run manually, or:
+php artisan app:generate-daily-rides   # run manually, or:
 ```
 ```bash
 # crontab, for production

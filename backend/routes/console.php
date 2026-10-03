@@ -10,6 +10,6 @@ Artisan::command('inspire', function () {
 
 
 
-Schedule::command('rides:generate-daily')
+Schedule::command('app:generate-daily-rides')
     ->dailyAt('00:05')
     ->timezone(config('app.timezone'));
