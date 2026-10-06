@@ -51,7 +51,7 @@ A Laravel-based ride-sharing platform for university students, connecting them w
 - **Frontend**: Livewire 3.6 + Tailwind CSS (Admin Panel)
 - **Database**: SQLite by default, with a populated demo database included in the repository
 - **External APIs**:
-  - Google Maps Geocoding API
+  - Google Maps JavaScript, Routes, and Geocoding APIs
   - OpenRouteService Optimization API
   - Twilio (SMS — configured, not yet wired into active routes)
   - Firebase Cloud Messaging (push notifications — configured, not yet wired into active routes)
@@ -124,9 +124,9 @@ FIREBASE_CLIENT_EMAIL=your_firebase_service_account_email
 FIREBASE_PRIVATE_KEY=your_firebase_service_account_private_key
 ```
 
-The admin panel and API can start without either key. To display the admin ride map, configure a Google Cloud project with billing and the Maps JavaScript API. Reverse geocoding also needs the Geocoding API. The current code uses the same Google key in the browser and on the server, so a key restricted only to website referrers (such as `http://127.0.0.1:8000/*`) can break server-side geocoding. A production setup should change the configuration to use separately restricted browser and server keys.
+The admin panel and API can start without either key. To display the admin ride map, configure a Google Cloud project with billing and the Maps JavaScript API. The map uses the [Routes Library](https://developers.google.com/maps/documentation/javascript/routes/start) when it needs Google to draw a road line, so enable the Routes API too. Reverse geocoding also needs the Geocoding API. The current code uses the same Google key in the browser and on the server, so a key restricted only to website referrers (such as `http://127.0.0.1:8000/*`) can break server-side geocoding. A production setup should change the configuration to use separately restricted browser and server keys.
 
-The ride page draws route geometry returned by OpenRouteService when available; otherwise it requests a route through Google's Directions Service (Legacy). [Google says](https://developers.google.com/maps/documentation/javascript/legacy/directions) new Cloud projects can no longer enable Directions API (Legacy) as of October 2026. For a new project, configure an OpenRouteService key with VROOM optimization access and allow the PHP server to reach `https://api.heigit.org/vroom/v0` to display route lines. If routing is unavailable, the page still shows the saved stops in their existing order.
+The ride page draws route geometry returned by OpenRouteService when available; otherwise it requests a route through Google's Routes Library. To optimize stop order, configure an OpenRouteService key with VROOM optimization access and allow the PHP server to reach `https://api.heigit.org/vroom/v0`. If routing is unavailable, the page still shows the saved stops in their existing order.
 
 Restart the server after changing `.env` values; if configuration is cached, run `php artisan config:clear` first.
 

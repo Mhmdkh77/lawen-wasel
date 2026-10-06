@@ -117,7 +117,7 @@
       const driverLocation = waypoints[0];
       const checkpointColors = { start: '#374151', pickup: '#16a34a', delivery: '#ea580c' };
 
-      function initMap() {
+      async function initMap() {
          if (!driverLocation) {
             document.getElementById('map').textContent = 'No route coordinates available.';
             return;
@@ -200,45 +200,56 @@
             return;
          }
 
-         const directionsService = new google.maps.DirectionsService();
-         const directionsRenderer = new google.maps.DirectionsRenderer({ map, suppressMarkers: true });
+         try {
+            const { Route } = await google.maps.importLibrary('routes');
+            const { routes } = await Route.computeRoutes({
+               origin: waypoints[0],
+               destination: waypoints[waypoints.length - 1],
+               intermediates: waypoints.slice(1, -1).map(point => ({ location: point })),
+               travelMode: 'DRIVING',
+               optimizeWaypointOrder: false,
+               fields: ['path'],
+            });
 
-         const gWaypoints = waypoints.slice(1, -1).map(point => ({
-            location: new google.maps.LatLng(point.lat, point.lng),
-            stopover: true,
-         }));
-
-         directionsService.route({
-            origin: new google.maps.LatLng(waypoints[0].lat, waypoints[0].lng),
-            destination: new google.maps.LatLng(waypoints[waypoints.length - 1].lat, waypoints[waypoints.length - 1].lng),
-            waypoints: gWaypoints,
-            optimizeWaypoints: false,
-            travelMode: google.maps.TravelMode.DRIVING,
-         }, (result, status) => {
-            if (status === "OK") {
-               directionsRenderer.setDirections(result);
-            } else {
-               new google.maps.Polyline({
-                  map,
-                  path: waypoints,
-                  strokeOpacity: 0,
-                  icons: [{
-                     icon: {
-                        path: 'M 0,-1 0,1',
-                        strokeColor: '#d97706',
-                        strokeOpacity: 1,
-                        scale: 3,
-                     },
-                     offset: '0',
-                     repeat: '16px',
-                  }],
-               });
-               const statusMessage = document.getElementById('route-map-status');
-               statusMessage.textContent = `Road directions are unavailable (${status}). The dashed line shows checkpoint order only; it is not a drivable route.`;
-               statusMessage.hidden = false;
-               console.error("Failed to fetch directions: " + status);
+            if (!routes?.length) {
+               throw new Error('No route found');
             }
-         });
+
+            const polylines = routes[0].createPolylines({
+               polylineOptions: {
+                  strokeColor: '#2563eb',
+                  strokeOpacity: 0.85,
+                  strokeWeight: 5,
+               },
+            });
+            if (!polylines.length) {
+               throw new Error('No route line returned');
+            }
+
+            polylines.forEach(polyline => polyline.setMap(map));
+            routes[0].path?.forEach(point => bounds.extend(point));
+            map.fitBounds(bounds);
+         } catch (error) {
+            new google.maps.Polyline({
+               map,
+               path: waypoints,
+               strokeOpacity: 0,
+               icons: [{
+                  icon: {
+                     path: 'M 0,-1 0,1',
+                     strokeColor: '#d97706',
+                     strokeOpacity: 1,
+                     scale: 3,
+                  },
+                  offset: '0',
+                  repeat: '16px',
+               }],
+            });
+            const statusMessage = document.getElementById('route-map-status');
+            statusMessage.textContent = 'Road directions are unavailable. The dashed line shows checkpoint order only; it is not a drivable route.';
+            statusMessage.hidden = false;
+            console.error('Failed to fetch road route:', error);
+         }
       }
 
       window.initMap = initMap;
