@@ -92,7 +92,7 @@ php artisan key:generate
 On PowerShell, use `Copy-Item .env.example .env` instead of `cp`. The `.env` file stays local and should not be committed.
 
 ### 4. Configure the Database
-The repository already includes `database/database.sqlite` with migrated tables and demo data. The default `.env.example` configuration uses that file. For a first run, you can proceed directly to the frontend build; there is no need to create the file, migrate, or seed it again.
+The repository already includes `database/database.sqlite` with migrated tables and demo data. The default `.env.example` configuration uses that file and stores sessions and cache in files, so normal page views do not change the tracked database. For a first run, you can proceed directly to the frontend build; there is no need to create the file, migrate, or seed it again.
 
 To use a fresh MySQL database instead, create the database and edit `.env`:
 ```env
