@@ -46,7 +46,7 @@ class UsersIndex extends Component
             })
             ->orderBy($sortField, $sortDirection)
             ->with('city')
-            ->simplePaginate(50);
+            ->paginate(20);
 
         return view('livewire.users-index', [
             'users' => $users,

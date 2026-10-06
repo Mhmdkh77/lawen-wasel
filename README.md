@@ -182,6 +182,8 @@ npm run dev
 ```bash
 php artisan serve
 ```
+On Windows, use `./serve-fast.ps1` from `backend` for faster local page loads. It runs the same development server with PHP OPcache enabled; PHP must include `php_opcache.dll`. Route optimization is cached after the first successful request, so reopening a ride does not wait for the routing API again.
+
 Access the admin panel at `http://localhost:8000/admin/login`. The app has no page at `/`.
 
 ### 11. (Optional) Enable Recurring Ride Generation

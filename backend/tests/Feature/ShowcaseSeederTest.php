@@ -68,6 +68,15 @@ test('showcase seed creates connected scenarios and can be run twice', function 
     ]), 'admin');
     config()->set('services.ors.key', null);
 
+    $this->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('Upcoming rides')
+        ->assertSee('Needs attention')
+        ->assertSee('Mira Haddad')
+        ->assertViewHas('overview', fn ($overview) => $overview['rides_in_progress'] >= 1
+            && $overview['open_requests'] >= 1)
+        ->assertViewHas('schedule', fn ($schedule) => $schedule->count() === 7);
+
     $this->get(route('admin.rides.show', $morning))->assertOk()->assertSee('Route Map');
     $this->get(route('admin.ride-requests.show', $competing))->assertOk()->assertSee('Driver Offers');
     $this->get(route('admin.bookings.show', $outboundBooking))->assertOk();
@@ -116,12 +125,13 @@ test('numbered checkpoints follow the optimized pickup and drop-off order', func
         $steps[] = ['type' => 'pickup', 'id' => $node->id];
         $steps[] = ['type' => 'delivery', 'id' => $node->id];
     }
-    Http::fake(fn() => Http::response(['routes' => [['steps' => $steps]]]));
+    Http::fake(fn() => Http::response(['routes' => [['steps' => $steps, 'geometry' => 'encoded-road-path']]]));
     config()->set('services.ors.key', 'test-key');
 
     $this->get(route('admin.rides.show', $ride))
         ->assertOk()
         ->assertViewHas('routeOptimized', true)
+        ->assertViewHas('routeGeometry', 'encoded-road-path')
         ->assertViewHas('routeCheckpoints', fn($checkpoints) => count($checkpoints) === 9
             && $checkpoints[1]['node_id'] === $nodes->first()->id
             && $checkpoints[1]['kind'] === 'pickup'
@@ -129,4 +139,13 @@ test('numbered checkpoints follow the optimized pickup and drop-off order', func
             && $checkpoints[2]['kind'] === 'delivery'
             && $checkpoints[8]['number'] === 8)
         ->assertViewHas('orderedWaypoints', fn($waypoints) => count($waypoints) === 9);
+
+    Http::assertSent(fn($request) => $request['options']['g'] === true);
+
+    $this->get(route('admin.rides.show', $ride))->assertOk();
+    Http::assertSentCount(1);
+
+    $nodes->first()->update(['pickup_latitude' => 33.4]);
+    $this->get(route('admin.rides.show', $ride))->assertOk();
+    Http::assertSentCount(2);
 });

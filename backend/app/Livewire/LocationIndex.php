@@ -43,7 +43,7 @@ class LocationIndex extends Component
                     });
             })
             ->orderBy($sortField, $sortDirection)
-            ->simplePaginate(50);
+            ->paginate(20);
 
         return view('livewire.location-index', [
             'locations' => $locations,

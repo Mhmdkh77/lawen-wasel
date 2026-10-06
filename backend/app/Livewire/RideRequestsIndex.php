@@ -57,7 +57,7 @@ class RideRequestsIndex extends Component
                 $query->where('ride_requests.status', $this->statusFilter);
             })
             ->orderBy('ride_requests.' . $sortField, $this->sortDirection)
-            ->simplePaginate(20);
+            ->paginate(20);
 
         return view('livewire.ride-requests-index', [
             'rideRequests' => $rideRequests,

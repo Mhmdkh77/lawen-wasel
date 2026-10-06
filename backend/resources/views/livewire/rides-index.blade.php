@@ -69,6 +69,6 @@
     </div>
 
     <div class="p-4 border-t border-gray-100">
-        {{ $rides->links() }}
+        {{ $rides->links('pagination.admin', ['livewire' => true]) }}
     </div>
 </div>

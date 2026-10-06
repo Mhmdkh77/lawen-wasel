@@ -57,7 +57,7 @@ class BookingsIndex extends Component
                 $query->where('bookings.status', $this->statusFilter);
             })
             ->orderBy('bookings.' . $sortField, $this->sortDirection)
-            ->simplePaginate(20);
+            ->paginate(20);
 
         return view('livewire.bookings-index', [
             'bookings' => $bookings,

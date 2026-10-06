@@ -83,12 +83,18 @@
             </div>
             <div class="border border-gray-200 rounded-lg p-4 max-h-[500px] overflow-y-auto">
                <h4 class="font-semibold text-ink-900 mb-3">Driver checkpoints</h4>
+               <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-600 mb-3" aria-label="Checkpoint colors">
+                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-gray-700"></span>Start</span>
+                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-green-600"></span>Pickup</span>
+                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-orange-600"></span>Drop-off</span>
+                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span>Shared stop</span>
+               </div>
                @if(!$routeOptimized && count($routeCheckpoints) > 1)
                   <p class="text-xs text-gray-500 mb-3">Route optimization is unavailable. These stops follow the saved order.</p>
                @endif
                @forelse($routeCheckpoints as $checkpoint)
                   <div class="flex gap-3 pb-4 last:pb-0" data-checkpoint-number="{{ $checkpoint['number'] }}">
-                     <span class="flex-none w-7 h-7 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center">
+                     <span class="flex-none w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center {{ $checkpoint['kind'] === 'start' ? 'bg-gray-700' : ($checkpoint['kind'] === 'pickup' ? 'bg-green-600' : 'bg-orange-600') }}">
                         {{ $checkpoint['number'] === 0 ? 'S' : $checkpoint['number'] }}
                      </span>
                      <div class="min-w-0">
@@ -107,7 +113,9 @@
    <script>
       const waypoints = @json($orderedWaypoints);
       const routeCheckpoints = @json($routeCheckpoints);
+      const routeGeometry = @json($routeGeometry);
       const driverLocation = waypoints[0];
+      const checkpointColors = { start: '#374151', pickup: '#16a34a', delivery: '#ea580c' };
 
       function initMap() {
          if (!driverLocation) {
@@ -135,6 +143,9 @@
          stopsByLocation.forEach(stops => {
             const first = stops[0];
             const label = first.number === 0 ? 'S' : String(first.number);
+            const markerColor = new Set(stops.map(stop => stop.kind)).size > 1
+               ? '#9333ea'
+               : checkpointColors[first.kind];
             const marker = new google.maps.Marker({
                map,
                position: { lat: first.lat, lng: first.lng },
@@ -148,7 +159,7 @@
                icon: {
                   path: google.maps.SymbolPath.CIRCLE,
                   scale: 18,
-                  fillColor: first.number === 0 ? '#374151' : '#2563eb',
+                  fillColor: markerColor,
                   fillOpacity: 1,
                   strokeColor: '#ffffff',
                   strokeWeight: 2,
@@ -175,6 +186,20 @@
             return;
          }
 
+         if (routeGeometry) {
+            const path = google.maps.geometry.encoding.decodePath(routeGeometry);
+            new google.maps.Polyline({
+               map,
+               path,
+               strokeColor: '#2563eb',
+               strokeOpacity: 0.85,
+               strokeWeight: 5,
+            });
+            path.forEach(point => bounds.extend(point));
+            map.fitBounds(bounds);
+            return;
+         }
+
          const directionsService = new google.maps.DirectionsService();
          const directionsRenderer = new google.maps.DirectionsRenderer({ map, suppressMarkers: true });
 
@@ -193,8 +218,23 @@
             if (status === "OK") {
                directionsRenderer.setDirections(result);
             } else {
+               new google.maps.Polyline({
+                  map,
+                  path: waypoints,
+                  strokeOpacity: 0,
+                  icons: [{
+                     icon: {
+                        path: 'M 0,-1 0,1',
+                        strokeColor: '#d97706',
+                        strokeOpacity: 1,
+                        scale: 3,
+                     },
+                     offset: '0',
+                     repeat: '16px',
+                  }],
+               });
                const statusMessage = document.getElementById('route-map-status');
-               statusMessage.textContent = `Road directions are unavailable (${status}). The checkpoint order is still shown.`;
+               statusMessage.textContent = `Road directions are unavailable (${status}). The dashed line shows checkpoint order only; it is not a drivable route.`;
                statusMessage.hidden = false;
                console.error("Failed to fetch directions: " + status);
             }
@@ -204,6 +244,6 @@
       window.initMap = initMap;
    </script>
 
-   <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.api_key') }}&callback=initMap" async
+   <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.api_key') }}&libraries=geometry&callback=initMap" async
       defer></script>
 </x-layout>

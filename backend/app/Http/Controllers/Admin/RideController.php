@@ -31,6 +31,7 @@ class RideController extends Controller
             'orderedWaypoints' => $routePlan['waypoints'],
             'routeCheckpoints' => $routePlan['checkpoints'],
             'routeOptimized' => $routePlan['optimized'],
+            'routeGeometry' => $routePlan['geometry'],
         ]);
     }
 }

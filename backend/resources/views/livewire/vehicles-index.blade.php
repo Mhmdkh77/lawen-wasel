@@ -57,6 +57,6 @@
     </div>
 
     <div class="p-4 border-t border-gray-100">
-        {{ $vehicles->links() }}
+        {{ $vehicles->links('pagination.admin', ['livewire' => true]) }}
     </div>
 </div>

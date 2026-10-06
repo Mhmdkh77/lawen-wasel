@@ -14,9 +14,14 @@ class RidesIndex extends Component
     public $statusFilter = '';
     public $sortField = 'scheduled_time';
     public $sortDirection = 'asc';
-    public $perPage = 10;
+    public $perPage = 20;
 
     public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter()
     {
         $this->resetPage();
     }
