@@ -41,9 +41,9 @@
             <form action="{{ route('admin.logout') }}" method="POST">
                @csrf
                @method('DELETE')
-               <button
-                  class="cursor-pointer bg-ink-800 rounded text-xs text-white px-3 py-1.5 hover:bg-ink-900 transition-colors">
-                  <i class="fa-solid fa-right-from-bracket mr-1"></i> Log Out
+               <button type="submit"
+                  class="inline-flex min-h-9 items-center justify-center rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-ink-800 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                  Sign out
                </button>
             </form>
          </div>

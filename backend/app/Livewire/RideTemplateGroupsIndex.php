@@ -56,7 +56,7 @@ class RideTemplateGroupsIndex extends Component
                 $query->where('ride_template_groups.is_active', $this->activeFilter === '1');
             })
             ->orderBy('ride_template_groups.' . $sortField, $this->sortDirection)
-            ->simplePaginate(20);
+            ->paginate(20);
 
         return view('livewire.ride-template-groups-index', [
             'groups' => $groups,

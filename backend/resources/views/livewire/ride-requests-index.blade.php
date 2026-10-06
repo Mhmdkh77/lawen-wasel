@@ -56,6 +56,6 @@
     </div>
 
     <div class="p-4 border-t border-gray-100">
-        {{ $rideRequests->links() }}
+        {{ $rideRequests->links('pagination.admin', ['livewire' => true]) }}
     </div>
 </div>

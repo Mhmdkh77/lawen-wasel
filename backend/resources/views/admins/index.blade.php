@@ -30,6 +30,6 @@
         </table>
     </div>
     <div class="p-4 border-t border-gray-100">
-        {{ $admins->links() }}
+        {{ $admins->links('pagination.admin') }}
     </div>
 </x-layout>

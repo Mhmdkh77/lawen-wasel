@@ -51,7 +51,7 @@ class VehiclesIndex extends Component
                 $sortField === 'driver_name' ? 'users.name' : 'vehicles.' . $sortField,
                 $sortDirection
             )
-            ->simplePaginate(20);
+            ->paginate(20);
 
         return view('livewire.vehicles-index', [
             'vehicles' => $vehicles,

@@ -48,7 +48,7 @@ class DriversIndex extends Component
             ->orderBy($sortField, $sortDirection)
             ->select('users.*')
             ->with(['city', 'driver'])
-            ->simplePaginate(50);
+            ->paginate(20);
 
         return view('livewire.drivers-index', [
             'users' => $users,

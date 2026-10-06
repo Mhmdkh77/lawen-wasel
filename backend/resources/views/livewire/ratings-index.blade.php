@@ -46,6 +46,6 @@
     </div>
 
     <div class="p-4 border-t border-gray-100">
-        {{ $ratings->links() }}
+        {{ $ratings->links('pagination.admin', ['livewire' => true]) }}
     </div>
 </div>

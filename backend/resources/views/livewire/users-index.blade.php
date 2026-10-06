@@ -52,6 +52,6 @@
     </div>
 
     <div class="p-4 border-t border-gray-100">
-        {{ $users->links() }}
+        {{ $users->links('pagination.admin', ['livewire' => true]) }}
     </div>
 </div>

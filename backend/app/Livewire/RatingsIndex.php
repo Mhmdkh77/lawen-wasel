@@ -39,7 +39,7 @@ class RatingsIndex extends Component
                 $query->where('rating', $this->ratingFilter);
             })
             ->orderBy($sortField, $this->sortDirection)
-            ->simplePaginate(20);
+            ->paginate(20);
 
         return view('livewire.ratings-index', [
             'ratings' => $ratings,

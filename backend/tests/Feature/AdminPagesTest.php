@@ -95,7 +95,9 @@ test('ride details render when route optimization cannot connect', function () {
     ]);
 
     config()->set('services.ors.key', 'test-key');
-    Http::fake(function ($request) {
+    $attempts = 0;
+    Http::fake(function ($request) use (&$attempts) {
+        $attempts++;
         expect($request->url())->toBe('https://api.heigit.org/vroom/v0');
         throw new ConnectionException('Service unavailable');
     });
@@ -105,6 +107,7 @@ test('ride details render when route optimization cannot connect', function () {
         ->assertSee('Route Map')
         ->assertSee('Driver checkpoints')
         ->assertViewHas('routeOptimized', false)
+        ->assertViewHas('routeGeometry', null)
         ->assertViewHas('routeCheckpoints', fn($checkpoints) => count($checkpoints) === 3
             && $checkpoints[1]['kind'] === 'pickup'
             && $checkpoints[1]['number'] === 1
@@ -114,4 +117,7 @@ test('ride details render when route optimization cannot connect', function () {
             ['lat' => 33.8, 'lng' => 35.4],
             ['lat' => 33.7, 'lng' => 35.3],
         ]);
+
+    $this->get(route('admin.rides.show', $ride))->assertOk();
+    expect($attempts)->toBe(1);
 });

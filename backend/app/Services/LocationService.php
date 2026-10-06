@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -41,7 +42,7 @@ class LocationService
         $driverLng = $ride->driver?->user?->longitude;
 
         if ($driverLat === null || $driverLng === null) {
-            return ['waypoints' => [], 'checkpoints' => [], 'optimized' => false];
+            return ['waypoints' => [], 'checkpoints' => [], 'optimized' => false, 'geometry' => null];
         }
 
         $start = [
@@ -89,7 +90,8 @@ class LocationService
                     'profile' => 'driving-car',
                 ]
             ],
-            'shipments' => $shipments
+            'shipments' => $shipments,
+            'options' => ['g' => true],
         ];
 
         $orsApiKey = config('services.ors.key');
@@ -98,24 +100,41 @@ class LocationService
             return $fallbackPlan;
         }
 
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => $orsApiKey,
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ])->connectTimeout(8)->timeout(15)
-                ->post(config('services.ors.optimization_url'), $payload);
+        $cacheKey = 'ride-route-v1:' . hash('sha256', json_encode([
+            $ride->id,
+            config('services.ors.optimization_url'),
+            $orsApiKey,
+            $payload,
+        ]));
+        $routeResult = Cache::get($cacheKey);
+        $cachedRoute = is_array($routeResult);
 
-            if (!$response->successful()) {
-                Log::warning('Route optimization unavailable', ['ride_id' => $ride->id, 'status' => $response->status()]);
-                return $fallbackPlan;
+        if ($cachedRoute && ($routeResult['unavailable'] ?? false)) {
+            return $fallbackPlan;
+        }
+
+        try {
+            if (!$cachedRoute) {
+                $response = Http::withHeaders([
+                    'Authorization' => $orsApiKey,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ])->connectTimeout(8)->timeout(15)
+                    ->post(config('services.ors.optimization_url'), $payload);
+
+                if (!$response->successful()) {
+                    Log::warning('Route optimization unavailable', ['ride_id' => $ride->id, 'status' => $response->status()]);
+                    return $this->cacheUnavailableRoute($cacheKey, $fallbackPlan);
+                }
+
+                $routeResult = $response->json();
             }
 
-            $steps = data_get($response->json(), 'routes.0.steps');
+            $steps = data_get($routeResult, 'routes.0.steps');
 
             if (!is_array($steps) || $steps === []) {
                 Log::warning('Route optimization returned no route', ['ride_id' => $ride->id]);
-                return $fallbackPlan;
+                return $this->cacheUnavailableRoute($cacheKey, $fallbackPlan);
             }
 
             $orderedSteps = collect($steps)
@@ -126,7 +145,7 @@ class LocationService
 
             if ($actual !== $expected) {
                 Log::warning('Route optimization omitted stops', ['ride_id' => $ride->id]);
-                return $fallbackPlan;
+                return $this->cacheUnavailableRoute($cacheKey, $fallbackPlan);
             }
 
             $nodesById = $nodes->keyBy('id');
@@ -135,11 +154,26 @@ class LocationService
                 'node' => $nodesById->get($step['id']),
             ])->all();
 
-            return $this->buildRoutePlan($start, $actions, $bookingsByNode, true);
+            $plan = $this->buildRoutePlan($start, $actions, $bookingsByNode, true);
+            $geometry = data_get($routeResult, 'routes.0.geometry');
+            $plan['geometry'] = is_string($geometry) && $geometry !== '' ? $geometry : null;
+
+            if (!$cachedRoute) {
+                Cache::put($cacheKey, $routeResult, now()->addMinutes(30));
+            }
+
+            return $plan;
         } catch (ConnectionException $e) {
             Log::warning('Route optimization connection failed', ['ride_id' => $ride->id, 'error' => $e->getMessage()]);
-            return $fallbackPlan;
+            return $this->cacheUnavailableRoute($cacheKey, $fallbackPlan);
         }
+    }
+
+    private function cacheUnavailableRoute(string $cacheKey, array $fallbackPlan): array
+    {
+        Cache::put($cacheKey, ['unavailable' => true], now()->addMinutes(2));
+
+        return $fallbackPlan;
     }
 
     private function buildRoutePlan(array $start, array $actions, $bookingsByNode, bool $optimized): array
@@ -172,6 +206,6 @@ class LocationService
             }
         }
 
-        return ['waypoints' => $waypoints, 'checkpoints' => $checkpoints, 'optimized' => $optimized];
+        return ['waypoints' => $waypoints, 'checkpoints' => $checkpoints, 'optimized' => $optimized, 'geometry' => null];
     }
 }
