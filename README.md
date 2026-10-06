@@ -34,7 +34,7 @@ A Laravel-based ride-sharing platform for university students, connecting them w
 
 ### Technical Features
 - **Multi-Step Registration**: Email-verification-code flow before account creation
-- **Role-Based Access Control**: Separate `driver`/`passenger` middleware guards, plus a distinct admin auth guard
+- **Role-Based Access Control**: Driver and passenger API middleware, plus a distinct admin auth guard
 - **API Authentication**: Laravel Sanctum for token-based mobile API auth
 - **Geolocation Support**: GPS coordinates on users, locations, and ride pickup/dropoff nodes
 - **Google Maps Integration**: Reverse geocoding and admin-side route visualization
@@ -49,34 +49,12 @@ A Laravel-based ride-sharing platform for university students, connecting them w
 - **PHP Version**: 8.2+
 - **Authentication**: Laravel Sanctum (API), session-based guard (Admin)
 - **Frontend**: Livewire 3.6 + Tailwind CSS (Admin Panel)
-- **Database**: SQLite by default (`.env.example`); MySQL/PostgreSQL supported
+- **Database**: SQLite by default, with a populated demo database included in the repository
 - **External APIs**:
   - Google Maps Geocoding API
   - OpenRouteService Optimization API
   - Twilio (SMS — configured, not yet wired into active routes)
   - Firebase Cloud Messaging (push notifications — configured, not yet wired into active routes)
-
-## 📸 Screenshots
-
-### Admin Login
-![Admin Login](docs/screenshots/admin_login.png)
-*Secure admin authentication interface*
-
-### Dashboard Overview
-![Dashboard](docs/screenshots/dashboard.png)
-*Admin dashboard with real-time analytics and system statistics*
-
-### User Management
-![Users List](docs/screenshots/drivers_list.png)
-*Comprehensive user management showing drivers and passengers with verification status*
-
-### User Profile
-![User Profile](docs/screenshots/user_page.png)
-*Detailed user profile with activity history and rating information*
-
-### Ride Details & Route Visualization
-![Ride Details](docs/screenshots/ride_page.png)
-*Ride management interface with real-time route visualization using Google Maps and optimized waypoints*
 
 ## 📋 Prerequisites
 
@@ -84,8 +62,8 @@ A Laravel-based ride-sharing platform for university students, connecting them w
 - Composer
 - SQLite (default) or MySQL/PostgreSQL
 - Node.js and NPM (for admin panel frontend assets)
-- Google Maps API Key
-- OpenRouteService API Key
+- *(Optional)* Google Maps API key for the admin ride map and reverse geocoding
+- *(Optional)* OpenRouteService API key for optimized stop order and route geometry
 - *(Optional)* Twilio account — for SMS features once wired up
 - *(Optional)* Firebase project — for push notifications once wired up
 
@@ -103,18 +81,20 @@ composer install
 npm install
 ```
 
+Run the remaining commands from the `backend` directory. PHP needs the SQLite extensions (`pdo_sqlite` and `sqlite3`) for the default database.
+
 ### 3. Environment Configuration
 ```bash
 cp .env.example .env
+php artisan config:clear
 php artisan key:generate
 ```
+On PowerShell, use `Copy-Item .env.example .env` instead of `cp`. The `.env` file stays local and should not be committed.
 
 ### 4. Configure the Database
-`.env.example` defaults to SQLite, which needs no extra setup — just make sure the database file exists:
-```bash
-touch database/database.sqlite
-```
-To use MySQL/PostgreSQL instead, edit `.env`:
+The repository already includes `database/database.sqlite` with migrated tables and demo data. The default `.env.example` configuration uses that file. For a first run, you can proceed directly to the frontend build; there is no need to create the file, migrate, or seed it again.
+
+To use a fresh MySQL database instead, create the database and edit `.env`:
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -125,7 +105,7 @@ DB_PASSWORD=your_password
 ```
 
 ### 5. Configure External Services
-Add these to `.env` (none of them are pre-filled in `.env.example`):
+Add only the services you need to `.env` (none of these keys are pre-filled in `.env.example`):
 ```env
 # Google Maps (reverse geocoding + admin route map)
 GOOGLE_MAPS_API_KEY=your_google_maps_key
@@ -144,17 +124,25 @@ FIREBASE_CLIENT_EMAIL=your_firebase_service_account_email
 FIREBASE_PRIVATE_KEY=your_firebase_service_account_private_key
 ```
 
-For the admin ride map, enable billing, the Maps JavaScript API, and the Directions API (Legacy) for the Google key. Allow the local site's referrer (`http://127.0.0.1:8000/*` if you use that address). Reverse geocoding also uses the Geocoding API. For optimized stop order, use an OpenRouteService key with VROOM optimization access and allow the PHP server to reach `https://api.heigit.org/vroom/v0`. If optimization is unavailable, the ride page still shows the saved stops in their existing order. Restart the server after changing `.env` values; if configuration is cached, run `php artisan config:clear` first.
+The admin panel and API can start without either key. To display the admin ride map, configure a Google Cloud project with billing and the Maps JavaScript API. Reverse geocoding also needs the Geocoding API. The current code uses the same Google key in the browser and on the server, so a key restricted only to website referrers (such as `http://127.0.0.1:8000/*`) can break server-side geocoding. A production setup should change the configuration to use separately restricted browser and server keys.
 
-### 6. Run Migrations
+The ride page draws route geometry returned by OpenRouteService when available; otherwise it requests a route through Google's Directions Service (Legacy). [Google says](https://developers.google.com/maps/documentation/javascript/legacy/directions) new Cloud projects can no longer enable Directions API (Legacy) as of October 2026. For a new project, configure an OpenRouteService key with VROOM optimization access and allow the PHP server to reach `https://api.heigit.org/vroom/v0` to display route lines. If routing is unavailable, the page still shows the saved stops in their existing order.
+
+Restart the server after changing `.env` values; if configuration is cached, run `php artisan config:clear` first.
+
+The default `MAIL_MAILER=log` writes registration and password-reset codes to `storage/logs/laravel.log`. Configure SMTP in `.env` if you need real email delivery.
+
+### 6. Migrate a Fresh Database (Optional)
 ```bash
 php artisan migrate
 ```
+Run this when using a new empty database. The included SQLite demo database is already migrated. To deliberately rebuild a disposable demo database from scratch, `php artisan migrate:fresh --seed` deletes all existing tables and data before recreating them.
 
-### 7. Seed the Database (Optional, recommended for a working demo)
+### 7. Seed a Fresh Database (Optional)
 ```bash
 php artisan db:seed
 ```
+Run this only after migrating an empty database. The included SQLite database already has these records; running the full seeder against it can duplicate the demo admin and fail.
 Creates a demo admin (`admin@admin.com` / `admin`) plus a demo passenger (`passenger@user.com` / `pass`) and a demo driver (`driver@user.com` / `pass`), along with sample locations, vehicles, and rides. See `database/seeders/DatabaseSeeder.php`.
 
 The seed also adds a named showcase around Nabatieh: a five-seat, four-booking campus route; linked outbound and return bookings; a full active ride; a completed ride with reviews; a canceled ride; competing driver offers; requests in several statuses; vehicle photos; and active and paused recurring templates. Look for `SHOW-` vehicle plates and `Showcase |` template groups in the admin panel. Showcase users have `showcase.<name>@example.test` emails and the demo password `pass`.
@@ -232,8 +220,7 @@ curl -X POST http://localhost:8000/api/login \
 
 ## 🗄️ Database Schema
 
-![Database Schema](docs/screenshots/db.png)
-*Complete database schema showing all tables and relationships*
+The migrations in `backend/database/migrations` are the source of truth for the schema. The main tables are:
 
 ### Core Tables
 
@@ -278,8 +265,8 @@ app/
 │   ├── Controllers/
 │   │   ├── Api/              # API Controllers
 │   │   └── Admin/            # Admin Panel Controllers
-│   ├── Middleware/           # Custom Middleware
-│   └── Livewire/             # Admin panel Livewire components
+│   └── Middleware/           # Custom Middleware
+├── Livewire/                 # Admin panel Livewire components
 ├── Models/                   # Eloquent Models
 ├── Services/                 # Business Logic Services
 ├── Policies/                 # Authorization policies
@@ -304,4 +291,4 @@ resources/
 ```bash
 php artisan test
 ```
-The feature tests cover the login entry point, admin page rendering, driver ride-request access and acceptance, and multiple offers on a passenger request. Broader API coverage is still needed.
+The feature tests cover the login entry point, admin pages and pagination, showcase seed data, route checkpoints, driver ride-request access and acceptance, and multiple offers on a passenger request. Broader API coverage is still needed.
