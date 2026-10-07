@@ -19,11 +19,12 @@ class RideRequestFactory extends Factory
     public function definition(): array
     {
         $institution = Location::institutions()->inRandomOrder()->first();
+        $pickupCity = Location::cities()->inRandomOrder()->first();
 
         return [
             'passenger_id' => Passenger::factory(),
-            'passenger_latitude' => $this->faker->randomFloat(6, 33.05, 34.7),
-            'passenger_longitude' => $this->faker->randomFloat(6, 35.1, 36.6),
+            'passenger_latitude' => $pickupCity->latitude + $this->faker->randomFloat(6, -0.002, 0.002),
+            'passenger_longitude' => $pickupCity->longitude + $this->faker->randomFloat(6, -0.002, 0.002),
             'institution_location_id' => $institution->id,
             'nb_seats_requested' => 1,
             'notes' => fake()->optional()->sentence(),

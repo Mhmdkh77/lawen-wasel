@@ -203,6 +203,8 @@ class AdminDemoSeeder extends Seeder
 
         $rideRequest = RideRequest::factory()->accepted()->create([
             'passenger_id' => $passenger->id,
+            'passenger_latitude' => $passenger->user->latitude,
+            'passenger_longitude' => $passenger->user->longitude,
             'to_inst_ride_id' => $ride->type === 'to_institution' ? $ride->id : null,
             'from_inst_ride_id' => $ride->type === 'from_institution' ? $ride->id : null,
             'institution_location_id' => $institution->id,

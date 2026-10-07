@@ -14,6 +14,7 @@ use Database\Seeders\ShowcaseSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
@@ -87,8 +88,19 @@ test('showcase seed creates connected scenarios and can be run twice', function 
 test('default seed includes the named showcase', function () {
     $this->seed(DatabaseSeeder::class);
 
+    $demoBookings = DB::table('bookings')
+        ->join('rides', 'rides.id', '=', 'bookings.ride_id')
+        ->join('vehicles', 'vehicles.id', '=', 'rides.vehicle_id')
+        ->join('nodes', 'nodes.id', '=', 'bookings.node_id')
+        ->join('ride_requests', 'ride_requests.id', '=', 'bookings.ride_request_id')
+        ->join('passengers', 'passengers.id', '=', 'bookings.passenger_id')
+        ->join('users', 'users.id', '=', 'passengers.user_id')
+        ->whereRaw('vehicles.plate_number NOT LIKE ?', ['SHOW-%']);
+
     expect(User::where('email', 'showcase.mira@example.test')->exists())->toBeTrue()
-        ->and(Ride::whereHas('vehicle', fn($query) => $query->where('plate_number', 'like', 'SHOW-%'))->count())->toBe(6);
+        ->and(Ride::whereHas('vehicle', fn($query) => $query->where('plate_number', 'like', 'SHOW-%'))->count())->toBe(6)
+        ->and((clone $demoBookings)->count())->toBeGreaterThan(0)
+        ->and((clone $demoBookings)->whereRaw('(ABS(nodes.pickup_latitude - users.latitude) > 0.000001 OR ABS(nodes.pickup_longitude - users.longitude) > 0.000001 OR ABS(ride_requests.passenger_latitude - users.latitude) > 0.000001 OR ABS(ride_requests.passenger_longitude - users.longitude) > 0.000001)')->count())->toBe(0);
 });
 
 test('showcase recurring templates generate one ride per direction for a scheduled day', function () {
