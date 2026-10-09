@@ -17,6 +17,12 @@
 
                   <h1 id="login-heading" class="text-3xl font-semibold tracking-tight text-ink-900">Admin login</h1>
 
+                  @if (session('success') || session('error'))
+                     <p class="mt-6 rounded-xl border px-4 py-3 text-sm {{ session('error') ? 'border-red-200 bg-red-50 text-red-700' : 'border-green-200 bg-green-50 text-green-700' }}" role="status">
+                        {{ session('success') ?? session('error') }}
+                     </p>
+                  @endif
+
                   <form method="POST" action="{{ route('admin.login.attempt') }}" class="mt-8 space-y-6">
                      @csrf
                      <div>

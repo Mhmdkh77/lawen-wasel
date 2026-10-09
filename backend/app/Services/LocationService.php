@@ -53,8 +53,11 @@ class LocationService
             'label' => 'Driver start',
             'place' => $ride->driver->user->city?->name ?? 'Current location',
         ];
-        $nodes = $ride->nodes->sortBy('id')->values();
-        $bookingsByNode = $ride->bookings->keyBy('node_id');
+        $canceledNodeIds = $ride->bookings->where('status', '!=', 'active')
+            ->pluck('node_id')->filter()->all();
+        $nodes = $ride->nodes->reject(fn($node) => in_array($node->id, $canceledNodeIds, true))
+            ->sortBy('id')->values();
+        $bookingsByNode = $ride->bookings->where('status', 'active')->keyBy('node_id');
         $fallbackActions = $nodes->flatMap(fn($node) => [
             ['kind' => 'pickup', 'node' => $node],
             ['kind' => 'delivery', 'node' => $node],

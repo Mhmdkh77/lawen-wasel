@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\EnsureDriverIsVerified;
+use App\Http\Middleware\EnsureAdminIsActive;
+use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureUserIsDriver;
 use App\Http\Middleware\EnsureUserIsPassenger;
 use Illuminate\Foundation\Application;
@@ -16,6 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
+            'admin-active' => EnsureAdminIsActive::class,
+            'super-admin' => EnsureSuperAdmin::class,
             'driver' =>   EnsureUserIsDriver::class,
             'driver-verified' =>  EnsureDriverIsVerified::class,
             'passenger' => EnsureUserIsPassenger::class

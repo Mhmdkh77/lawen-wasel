@@ -11,7 +11,7 @@
         <select wire:model.live="statusFilter"
             class="text-sm border border-slate-200 rounded-md px-3 py-2 text-slate-700 focus:outline-none focus:border-brand-500">
             <option value="">All statuses</option>
-            <option value="active">Active</option>
+            <option value="active">Confirmed</option>
             <option value="passenger_canceled">Passenger Canceled</option>
             <option value="ride_canceled">Ride Canceled</option>
         </select>
@@ -42,7 +42,7 @@
                         </td>
                         <td class="px-6 py-4">{{ $booking->nb_seats }}</td>
                         <td class="px-6 py-4">${{ number_format($booking->price, 2) }}</td>
-                        <td class="px-6 py-4"><x-status-badge :status="$booking->status" /></td>
+                        <td class="px-6 py-4"><x-status-badge :status="$booking->status" :label="$booking->status === 'active' ? 'Confirmed' : null" /></td>
                         <td class="px-6 py-4">{{ $booking->created_at->format('M j, Y') }}</td>
                     </tr>
                 @empty

@@ -13,6 +13,7 @@ use App\Models\RideGroup;
 use App\Models\RideOffer;
 use App\Models\RideRequest;
 use App\Models\Vehicle;
+use App\Services\BookingStopService;
 use App\Services\NotificationService;
 use App\Services\LocationService;
 use Illuminate\Http\Request;
@@ -69,7 +70,7 @@ class DriverRideController extends Controller
     }
 
 
-    public function acceptRideRequest(Request $request, RideRequest $rideRequest, NotificationService $notificationService)
+    public function acceptRideRequest(Request $request, RideRequest $rideRequest, NotificationService $notificationService, BookingStopService $bookingStopService)
     {
         $driver = $request->user()->driver;
 
@@ -89,7 +90,7 @@ class DriverRideController extends Controller
             return response()->json(['error' => 'This offer has already been responded to.'], 400);
         }
 
-        DB::transaction(function () use ($rideRequest, $notificationService) {
+        DB::transaction(function () use ($rideRequest, $notificationService, $bookingStopService) {
             // Update offer status
             $rideRequest->update(['status' => 'accepted']);
 
@@ -98,9 +99,7 @@ class DriverRideController extends Controller
                 'passenger_id' => $rideRequest->passenger->id,
             ]);
 
-            $institutionLocation = $rideRequest->institutionLocation;
-
-            $createBookingAndNode = function ($ride, $type) use ($bookingGroup, $rideRequest, $institutionLocation) {
+            $createBookingAndNode = function ($ride) use ($bookingGroup, $rideRequest, $bookingStopService) {
                 if (!$ride) {
                     return null;
                 }
@@ -119,12 +118,7 @@ class DriverRideController extends Controller
                 // Create Node for the ride
                 $node = Node::create([
                     'ride_id' => $ride->id,
-                    'pickup_location_id' => $rideRequest->passenger_location_id ?? null,
-                    'pickup_latitude' => $rideRequest->passenger_latitude ?? 0,
-                    'pickup_longitude' => $rideRequest->passenger_longitude ?? 0,
-                    'dropoff_location_id' => $institutionLocation->id,
-                    'dropoff_latitude' => $institutionLocation->latitude ?? 0,
-                    'dropoff_longitude' => $institutionLocation->longitude ?? 0,
+                    ...$bookingStopService->nodeAttributes($ride, $rideRequest),
                     'status' => 'pending',
                 ]);
 
@@ -145,10 +139,10 @@ class DriverRideController extends Controller
             };
 
             // Create booking & node for to_institution ride (if present)
-            $toBooking = $createBookingAndNode($rideRequest->toInstRide, 'to_institution');
+            $toBooking = $createBookingAndNode($rideRequest->toInstRide);
 
             // Create booking & node for from_institution ride (if present)
-            $fromBooking = $createBookingAndNode($rideRequest->fromInstRide, 'from_institution');
+            $fromBooking = $createBookingAndNode($rideRequest->fromInstRide);
 
             // Notify driver
             // $driver = $rideOffer->driver;
@@ -464,10 +458,23 @@ class DriverRideController extends Controller
             return response()->json(['error' => 'Ride cannot be started'], 400);
         }
 
-        $ride->update([
-            'status' => 'active',
-            'start_time' => now()
-        ]);
+        DB::transaction(function () use ($ride) {
+            $ride->update([
+                'status' => 'active',
+                'start_time' => now(),
+            ]);
+
+            $requestIds = RideRequest::whereIn('status', ['pending', 'driver_offered'])
+                ->where(fn ($query) => $query->where('to_inst_ride_id', $ride->id)
+                    ->orWhere('from_inst_ride_id', $ride->id))
+                ->pluck('id');
+
+            if ($requestIds->isNotEmpty()) {
+                RideRequest::whereIn('id', $requestIds)->update(['status' => 'expired']);
+                RideOffer::whereIn('ride_request_id', $requestIds)
+                    ->where('status', 'pending')->update(['status' => 'expired']);
+            }
+        });
 
         $ride->load('passengers');
 

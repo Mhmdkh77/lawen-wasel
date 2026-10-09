@@ -23,6 +23,8 @@ class AdminLoginController extends Controller
             'password' => ['required'],
         ]);
 
+        $credentials['is_active'] = true;
+
         if (! Auth::guard('admin')->attempt($credentials)) {
             throw ValidationException::withMessages([
                 'email' => 'The provided credentials are incorrect.',

@@ -36,6 +36,7 @@ test('admin tables show numbered pagination with a result count', function () {
         'name' => 'Test Admin',
         'email' => 'test-admin@example.test',
         'password' => 'password',
+        'is_super_admin' => true,
     ]), 'admin');
 
     foreach (range(1, 25) as $number) {

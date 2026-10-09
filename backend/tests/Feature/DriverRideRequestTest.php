@@ -31,7 +31,7 @@ function rideRequestTestRide(Driver $driver, string $type = 'to_institution'): R
 {
     $vehicle = Vehicle::create([
         'driver_id' => $driver->id,
-        'plate_number' => 'TEST' . $driver->id,
+        'plate_number' => 'TEST' . $driver->id . '-' . $type,
         'brand' => 'Test',
         'color' => 'Blue',
         'capacity' => 4,
@@ -100,6 +100,104 @@ test('the owner can view and accept a ride request', function () {
 
     $this->patchJson('/api/driver/ride-requests/' . $this->rideRequest->id . '/reject')
         ->assertStatus(400);
+});
+
+test('accepted round trips place the institution at the return pickup', function () {
+    $returnRide = rideRequestTestRide($this->owner, 'from_institution');
+    $this->rideRequest->update([
+        'from_inst_ride_id' => $returnRide->id,
+        'type' => 'round_trip',
+    ]);
+    Sanctum::actingAs($this->owner->user);
+
+    $this->patchJson('/api/driver/ride-requests/' . $this->rideRequest->id . '/accept')->assertOk();
+
+    $this->assertDatabaseHas('nodes', [
+        'ride_id' => $this->ride->id,
+        'pickup_latitude' => 33.8,
+        'dropoff_latitude' => 33.9,
+    ]);
+    $this->assertDatabaseHas('nodes', [
+        'ride_id' => $returnRide->id,
+        'pickup_location_id' => $this->rideRequest->institution_location_id,
+        'pickup_latitude' => 33.9,
+        'dropoff_location_id' => null,
+        'dropoff_latitude' => 33.8,
+    ]);
+});
+
+test('accepted offers keep a suggested outbound pickup and reverse the return trip', function () {
+    $returnRide = rideRequestTestRide($this->owner, 'from_institution');
+    $this->rideRequest->update([
+        'from_inst_ride_id' => $returnRide->id,
+        'type' => 'round_trip',
+    ]);
+    $offer = RideOffer::create([
+        'ride_request_id' => $this->rideRequest->id,
+        'driver_id' => $this->owner->id,
+        'offered_price' => 10,
+        'suggested_pickup_latitude' => 33.81,
+        'suggested_pickup_longitude' => 35.41,
+        'status' => 'pending',
+    ]);
+    Sanctum::actingAs($this->passenger->user);
+
+    $this->patchJson('/api/passenger/ride-offers/' . $offer->id . '/accept')->assertOk();
+
+    $this->assertDatabaseHas('nodes', [
+        'ride_id' => $this->ride->id,
+        'pickup_latitude' => 33.81,
+        'dropoff_latitude' => 33.9,
+    ]);
+    $this->assertDatabaseHas('nodes', [
+        'ride_id' => $returnRide->id,
+        'pickup_location_id' => $this->rideRequest->institution_location_id,
+        'pickup_latitude' => 33.9,
+        'dropoff_location_id' => null,
+        'dropoff_latitude' => 33.8,
+    ]);
+});
+
+test('an offer with only a suggested location uses that locations coordinates', function () {
+    $meetingPoint = Location::create([
+        'name' => 'Meeting point',
+        'type' => 'station',
+        'latitude' => 33.85,
+        'longitude' => 35.45,
+    ]);
+    $offer = RideOffer::create([
+        'ride_request_id' => $this->rideRequest->id,
+        'driver_id' => $this->owner->id,
+        'offered_price' => 10,
+        'suggested_pickup_location_id' => $meetingPoint->id,
+        'status' => 'pending',
+    ]);
+    Sanctum::actingAs($this->passenger->user);
+
+    $this->patchJson('/api/passenger/ride-offers/' . $offer->id . '/accept')->assertOk();
+
+    $this->assertDatabaseHas('nodes', [
+        'ride_id' => $this->ride->id,
+        'pickup_location_id' => $meetingPoint->id,
+        'pickup_latitude' => 33.85,
+        'pickup_longitude' => 35.45,
+    ]);
+});
+
+test('starting a ride expires unanswered requests and offers for it', function () {
+    $offer = RideOffer::create([
+        'ride_request_id' => $this->rideRequest->id,
+        'driver_id' => $this->owner->id,
+        'offered_price' => 10,
+        'status' => 'pending',
+    ]);
+    Sanctum::actingAs($this->owner->user);
+
+    $this->patchJson('/api/driver/rides/' . $this->ride->id . '/start')->assertOk();
+
+    $this->assertDatabaseHas('rides', ['id' => $this->ride->id, 'status' => 'active']);
+    $this->assertDatabaseHas('ride_requests', ['id' => $this->rideRequest->id, 'status' => 'expired']);
+    $this->assertDatabaseHas('ride_offers', ['id' => $offer->id, 'status' => 'expired']);
 });
 
 test('another driver cannot view or accept a ride request', function () {

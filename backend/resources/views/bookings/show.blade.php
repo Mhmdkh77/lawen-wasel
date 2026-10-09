@@ -20,7 +20,7 @@
             </div>
             <div>
                 <h3 class="text-gray-500 font-semibold text-sm mb-1">Status</h3>
-                <x-status-badge :status="$booking->status" />
+                <x-status-badge :status="$booking->status" :label="$booking->status === 'active' ? 'Confirmed' : null" />
             </div>
             <div>
                 <h3 class="text-gray-500 font-semibold text-sm mb-1">Pickup</h3>
@@ -78,7 +78,7 @@
                                 </td>
                                 <td class="py-2 px-4">#{{ $other->ride_id }} ({{ $other->ride->type ?? 'N/A' }})</td>
                                 <td class="py-2 px-4">{{ $other->nb_seats }}</td>
-                                <td class="py-2 px-4"><x-status-badge :status="$other->status" /></td>
+                                <td class="py-2 px-4"><x-status-badge :status="$other->status" :label="$other->status === 'active' ? 'Confirmed' : null" /></td>
                             </tr>
                         @endforeach
                     </tbody>

@@ -12,6 +12,11 @@ class Admin extends Authenticatable
 
     protected $guarded = [];
 
+    protected $attributes = [
+        'is_active' => true,
+        'is_super_admin' => false,
+    ];
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -22,6 +27,8 @@ class Admin extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'is_super_admin' => 'boolean',
         ];
     }
 }

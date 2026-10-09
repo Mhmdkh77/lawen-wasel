@@ -246,38 +246,47 @@ class ShowcaseSeeder extends Seeder
         $pickup = $toInstitution ? $city : $institution;
         $dropoff = $toInstitution ? $institution : $city;
         $existing = Booking::where('ride_id', $ride->id)->where('passenger_id', $passengerModel->id)->first();
-        $node = $existing?->node ?? Node::create([
-            'ride_id' => $ride->id,
-            'pickup_latitude' => $pickup->latitude,
-            'pickup_longitude' => $pickup->longitude,
-            'dropoff_location_id' => $dropoff->id,
-            'dropoff_latitude' => $dropoff->latitude,
-            'dropoff_longitude' => $dropoff->longitude,
-            'status' => 'pending',
-        ]);
-        $node->update([
-            'pickup_location_id' => $pickup->id,
-            'pickup_latitude' => $pickup->latitude,
-            'pickup_longitude' => $pickup->longitude,
-            'dropoff_location_id' => $dropoff->id,
-            'dropoff_latitude' => $dropoff->latitude,
-            'dropoff_longitude' => $dropoff->longitude,
-            'status' => $ride->status === 'completed' ? 'completed' : 'pending',
-        ]);
+        $node = null;
+        if ($status === 'active') {
+            $node = $existing?->node ?? Node::create([
+                'ride_id' => $ride->id,
+                'pickup_latitude' => $pickup->latitude,
+                'pickup_longitude' => $pickup->longitude,
+                'dropoff_location_id' => $dropoff->id,
+                'dropoff_latitude' => $dropoff->latitude,
+                'dropoff_longitude' => $dropoff->longitude,
+                'status' => 'pending',
+            ]);
+            $node->update([
+                'pickup_location_id' => $pickup->id,
+                'pickup_latitude' => $pickup->latitude,
+                'pickup_longitude' => $pickup->longitude,
+                'dropoff_location_id' => $dropoff->id,
+                'dropoff_latitude' => $dropoff->latitude,
+                'dropoff_longitude' => $dropoff->longitude,
+                'status' => $ride->status === 'completed' ? 'completed' : 'pending',
+            ]);
+        }
 
         $group = BookingGroup::firstOrCreate(['passenger_id' => $passengerModel->id]);
 
-        return Booking::updateOrCreate(
+        $booking = Booking::updateOrCreate(
             ['ride_id' => $ride->id, 'passenger_id' => $passengerModel->id],
             [
                 'booking_group_id' => $group->id,
                 'ride_request_id' => $request->id,
-                'node_id' => $node->id,
+                'node_id' => $node?->id,
                 'nb_seats' => $seats,
                 'price' => $price,
                 'status' => $status,
             ],
         );
+
+        if ($status !== 'active' && $existing?->node) {
+            $existing->node->delete();
+        }
+
+        return $booking;
     }
 
     private function bookingsAndRequests(array $rides, array $drivers, array $passengers, array $locations): void
