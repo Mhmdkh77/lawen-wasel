@@ -20,7 +20,7 @@ class PassengerController extends Controller
             abort(404, 'Passenger not found.');
         }
 
-        $user->load(['city', 'passenger.bookings' => function ($query) {
+        $user->load(['city', 'passenger.bookings.ride', 'passenger.bookings' => function ($query) {
             $query->latest()->limit(10);
         }]);
 
