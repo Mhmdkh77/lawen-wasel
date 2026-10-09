@@ -58,7 +58,7 @@
                   <td class="py-2 px-4">{{ $booking->node->dropoffLocation->name ?? 'N/A' }}</td>
                   <td class="py-2 px-4">{{ $booking->nb_seats }}</td>
                   <td class="py-2 px-4">${{ number_format($booking->price, 2) }}</td>
-                  <td class="py-2 px-4"><x-status-badge :status="$booking->status" /></td>
+                  <td class="py-2 px-4"><x-status-badge :status="$booking->status" :label="$booking->status === 'active' ? 'Confirmed' : null" /></td>
                 </tr>
               @endforeach
                </tbody>

@@ -21,6 +21,7 @@ test('the admin dashboard and index pages render', function () {
         'name' => 'Test Admin',
         'email' => 'admin@example.test',
         'password' => 'password',
+        'is_super_admin' => true,
     ]), 'admin');
 
     foreach ([
@@ -35,6 +36,7 @@ test('the admin dashboard and index pages render', function () {
         'admin.ride-template-groups.index',
         'admin.ratings.index',
         'admin.locations.index',
+        'admin.account.show',
         'admin.admins.index',
     ] as $route) {
         $this->get(route($route))->assertOk();

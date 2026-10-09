@@ -93,6 +93,7 @@ test('default seed includes the named showcase', function () {
         ->join('vehicles', 'vehicles.id', '=', 'rides.vehicle_id')
         ->join('nodes', 'nodes.id', '=', 'bookings.node_id')
         ->join('ride_requests', 'ride_requests.id', '=', 'bookings.ride_request_id')
+        ->join('locations as institutions', 'institutions.id', '=', 'ride_requests.institution_location_id')
         ->join('passengers', 'passengers.id', '=', 'bookings.passenger_id')
         ->join('users', 'users.id', '=', 'passengers.user_id')
         ->whereRaw('vehicles.plate_number NOT LIKE ?', ['SHOW-%']);
@@ -100,7 +101,30 @@ test('default seed includes the named showcase', function () {
     expect(User::where('email', 'showcase.mira@example.test')->exists())->toBeTrue()
         ->and(Ride::whereHas('vehicle', fn($query) => $query->where('plate_number', 'like', 'SHOW-%'))->count())->toBe(6)
         ->and((clone $demoBookings)->count())->toBeGreaterThan(0)
-        ->and((clone $demoBookings)->whereRaw('(ABS(nodes.pickup_latitude - users.latitude) > 0.000001 OR ABS(nodes.pickup_longitude - users.longitude) > 0.000001 OR ABS(ride_requests.passenger_latitude - users.latitude) > 0.000001 OR ABS(ride_requests.passenger_longitude - users.longitude) > 0.000001)')->count())->toBe(0);
+        ->and((clone $demoBookings)->whereRaw("(
+            (rides.type = 'to_institution' AND (
+                ABS(nodes.pickup_latitude - users.latitude) > 0.000001 OR
+                ABS(nodes.pickup_longitude - users.longitude) > 0.000001 OR
+                ABS(nodes.dropoff_latitude - institutions.latitude) > 0.000001 OR
+                ABS(nodes.dropoff_longitude - institutions.longitude) > 0.000001
+            )) OR
+            (rides.type = 'from_institution' AND (
+                ABS(nodes.pickup_latitude - institutions.latitude) > 0.000001 OR
+                ABS(nodes.pickup_longitude - institutions.longitude) > 0.000001 OR
+                ABS(nodes.dropoff_latitude - users.latitude) > 0.000001 OR
+                ABS(nodes.dropoff_longitude - users.longitude) > 0.000001
+            ))
+        )")->count())->toBe(0)
+        ->and(DB::table('bookings')->join('rides', 'rides.id', '=', 'bookings.ride_id')
+            ->where('rides.status', 'canceled')->where('bookings.status', 'active')->count())->toBe(0)
+        ->and(DB::table('bookings')->where('status', '!=', 'active')->whereNotNull('node_id')->count())->toBe(0)
+        ->and((clone $demoBookings)->where('ride_requests.type', 'round_trip')->count())->toBe(0)
+        ->and(DB::table('ride_requests')->whereIn('status', ['pending', 'driver_offered'])
+            ->where(function ($query) {
+                $closedRideIds = Ride::where('status', '!=', 'pending')->pluck('id');
+                $query->whereIn('to_inst_ride_id', $closedRideIds)
+                    ->orWhereIn('from_inst_ride_id', $closedRideIds);
+            })->count())->toBe(0);
 });
 
 test('showcase recurring templates generate one ride per direction for a scheduled day', function () {

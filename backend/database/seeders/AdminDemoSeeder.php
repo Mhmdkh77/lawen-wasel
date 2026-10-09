@@ -21,6 +21,7 @@ use App\Models\RideTemplateGroup;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleImage;
+use App\Services\BookingStopService;
 use Illuminate\Database\Seeder;
 
 class AdminDemoSeeder extends Seeder
@@ -41,7 +42,6 @@ class AdminDemoSeeder extends Seeder
         $rides = $this->seedRides($rideGroups, $vehicles);
 
         $this->seedRideRequestsAndBookings($rides, $passengers);
-        $this->seedRoundTripBookings($rides, $passengers);
 
         $this->seedRideTemplates($driversWithVehicles, $vehicles);
         $this->seedRatings();
@@ -53,6 +53,7 @@ class AdminDemoSeeder extends Seeder
             'name' => 'admin',
             'email' => 'admin@admin.com',
             'password' => bcrypt('admin'),
+            'is_super_admin' => true,
         ]);
 
         Admin::factory(2)->create();
@@ -197,18 +198,19 @@ class AdminDemoSeeder extends Seeder
         return $rides;
     }
 
-    private function createAcceptedBooking(Ride $ride, $passenger, string $type = 'one_way', ?BookingGroup $bookingGroup = null): Booking
+    private function createAcceptedBooking(Ride $ride, $passenger): Booking
     {
         $institution = Location::institutions()->inRandomOrder()->first();
 
         $rideRequest = RideRequest::factory()->accepted()->create([
             'passenger_id' => $passenger->id,
+            'passenger_location_id' => $passenger->user->city_id,
             'passenger_latitude' => $passenger->user->latitude,
             'passenger_longitude' => $passenger->user->longitude,
             'to_inst_ride_id' => $ride->type === 'to_institution' ? $ride->id : null,
             'from_inst_ride_id' => $ride->type === 'from_institution' ? $ride->id : null,
             'institution_location_id' => $institution->id,
-            'type' => $type,
+            'type' => 'one_way',
         ]);
 
         $offer = RideOffer::factory()->accepted()->create([
@@ -216,31 +218,22 @@ class AdminDemoSeeder extends Seeder
             'driver_id' => $ride->vehicle->driver_id,
         ]);
 
-        $node = Node::create([
-            'ride_id' => $ride->id,
-            'pickup_location_id' => null,
-            'pickup_latitude' => $rideRequest->passenger_latitude,
-            'pickup_longitude' => $rideRequest->passenger_longitude,
-            'dropoff_location_id' => $institution->id,
-            'dropoff_latitude' => $institution->latitude,
-            'dropoff_longitude' => $institution->longitude,
-            'status' => $ride->status === 'completed' ? 'completed' : 'pending',
-        ]);
+        $status = $ride->status === 'canceled'
+            ? 'ride_canceled'
+            : (fake()->numberBetween(1, 100) <= 15 ? 'passenger_canceled' : 'active');
 
-        $status = 'active';
-        $roll = fake()->numberBetween(1, 100);
-        if ($roll <= 15) {
-            $status = 'passenger_canceled';
-        } elseif ($ride->status === 'canceled' && $roll <= 30) {
-            $status = 'ride_canceled';
-        }
+        $node = $status === 'active' ? Node::create([
+            'ride_id' => $ride->id,
+            ...app(BookingStopService::class)->nodeAttributes($ride, $rideRequest),
+            'status' => $ride->status === 'completed' ? 'completed' : 'pending',
+        ]) : null;
 
         $booking = Booking::create([
             'passenger_id' => $passenger->id,
             'ride_id' => $ride->id,
-            'booking_group_id' => $bookingGroup?->id ?? BookingGroup::create(['passenger_id' => $passenger->id])->id,
+            'booking_group_id' => BookingGroup::create(['passenger_id' => $passenger->id])->id,
             'ride_request_id' => $rideRequest->id,
-            'node_id' => $node->id,
+            'node_id' => $node?->id,
             'nb_seats' => 1,
             'price' => $offer->offered_price,
             'status' => $status,
@@ -268,7 +261,11 @@ class AdminDemoSeeder extends Seeder
             $usedPassengerIds = [];
 
             for ($i = 0; $i < $extraCount; $i++) {
-                $status = fake()->randomElement($nonBookingStatuses);
+                $status = match ($ride->status) {
+                    'canceled' => 'canceled',
+                    'active', 'completed' => 'expired',
+                    default => fake()->randomElement($nonBookingStatuses),
+                };
                 $passenger = $passengers->random();
                 $institution = Location::institutions()->inRandomOrder()->first();
 
@@ -296,31 +293,6 @@ class AdminDemoSeeder extends Seeder
                 $usedPassengerIds[] = $passenger->id;
                 $this->createAcceptedBooking($ride, $passenger);
             }
-        }
-    }
-
-    private function seedRoundTripBookings($rides, $passengers): void
-    {
-        $toRides = $rides->where('type', 'to_institution')->where('available_seats', '>', 0)->values();
-        $fromRides = $rides->where('type', 'from_institution')->where('available_seats', '>', 0)->values();
-
-        $pairs = min(15, $toRides->count(), $fromRides->count());
-
-        for ($i = 0; $i < $pairs; $i++) {
-            $toRide = $toRides->random();
-            $fromRide = $fromRides->random();
-            $passenger = $passengers->random();
-
-            if (Booking::where('ride_id', $toRide->id)->where('passenger_id', $passenger->id)->exists()) {
-                continue;
-            }
-            if (Booking::where('ride_id', $fromRide->id)->where('passenger_id', $passenger->id)->exists()) {
-                continue;
-            }
-
-            $bookingGroup = BookingGroup::create(['passenger_id' => $passenger->id]);
-            $this->createAcceptedBooking($toRide, $passenger, 'round_trip', $bookingGroup);
-            $this->createAcceptedBooking($fromRide, $passenger, 'round_trip', $bookingGroup);
         }
     }
 

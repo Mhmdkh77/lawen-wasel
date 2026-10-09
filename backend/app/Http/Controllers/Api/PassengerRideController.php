@@ -18,6 +18,7 @@ use App\Models\Node;
 use App\Models\RideOffer;
 use Illuminate\Support\Facades\DB;
 use App\Services\NotificationService;
+use App\Services\BookingStopService;
 use Illuminate\Support\Facades\Redis;
 
 class PassengerRideController extends Controller
@@ -428,7 +429,7 @@ class PassengerRideController extends Controller
         return response()->json($rideOffer);
     }
 
-    public function acceptRideOffer(Request $request, RideOffer $rideOffer, NotificationService $notificationService)
+    public function acceptRideOffer(Request $request, RideOffer $rideOffer, NotificationService $notificationService, BookingStopService $bookingStopService)
     {
         $passenger = $request->user()->passenger;
 
@@ -453,7 +454,7 @@ class PassengerRideController extends Controller
             return response()->json(['error' => 'This offer has already been responded to.'], 400);
         }
 
-        DB::transaction(function () use ($rideOffer, $passenger, $notificationService) {
+        DB::transaction(function () use ($rideOffer, $passenger, $notificationService, $bookingStopService) {
             // Update offer status
             $rideOffer->update(['status' => 'accepted']);
 
@@ -462,9 +463,7 @@ class PassengerRideController extends Controller
                 'passenger_id' => $passenger->id,
             ]);
 
-            $institutionLocation = $rideOffer->rideRequest->institutionLocation;
-
-            $createBookingAndNode = function ($ride, $type) use ($bookingGroup, $rideOffer, $passenger, $institutionLocation) {
+            $createBookingAndNode = function ($ride) use ($bookingGroup, $rideOffer, $passenger, $bookingStopService) {
                 if (!$ride) {
                     return null;
                 }
@@ -483,12 +482,7 @@ class PassengerRideController extends Controller
                 // Create Node for the ride
                 $node = Node::create([
                     'ride_id' => $ride->id,
-                    'pickup_location_id' => $rideOffer->suggested_pickup_location_id,
-                    'pickup_latitude' => $rideOffer->suggested_pickup_latitude ?? 0,
-                    'pickup_longitude' => $rideOffer->suggested_pickup_longitude ?? 0,
-                    'dropoff_location_id' => $institutionLocation->id,
-                    'dropoff_latitude' => $institutionLocation->latitude ?? 0,
-                    'dropoff_longitude' => $institutionLocation->longitude ?? 0,
+                    ...$bookingStopService->nodeAttributes($ride, $rideOffer->rideRequest, $rideOffer),
                     'status' => 'pending',
                 ]);
 
@@ -509,10 +503,10 @@ class PassengerRideController extends Controller
             };
 
             // Create booking & node for to_institution ride (if present)
-            $toBooking = $createBookingAndNode($rideOffer->rideRequest->toInstRide, 'to_institution');
+            $toBooking = $createBookingAndNode($rideOffer->rideRequest->toInstRide);
 
             // Create booking & node for from_institution ride (if present)
-            $fromBooking = $createBookingAndNode($rideOffer->rideRequest->fromInstRide, 'from_institution');
+            $fromBooking = $createBookingAndNode($rideOffer->rideRequest->fromInstRide);
 
             // Notify driver
             $driver = $rideOffer->driver;

@@ -8,7 +8,7 @@
             $cards = [
                 ['label' => 'Rides today', 'value' => $overview['rides_today'], 'detail' => 'Scheduled for today', 'icon' => 'fa-solid fa-calendar-day', 'href' => route('admin.rides.index')],
                 ['label' => 'In progress', 'value' => $overview['rides_in_progress'], 'detail' => 'Rides currently active', 'icon' => 'fa-solid fa-route', 'href' => route('admin.rides.index')],
-                ['label' => 'Active bookings', 'value' => $overview['active_bookings'], 'detail' => 'Confirmed seats', 'icon' => 'fa-solid fa-ticket', 'href' => route('admin.bookings.index')],
+                ['label' => 'Active bookings', 'value' => $overview['active_bookings'], 'detail' => 'On pending or active rides', 'icon' => 'fa-solid fa-ticket', 'href' => route('admin.bookings.index')],
                 ['label' => 'Open requests', 'value' => $overview['open_requests'], 'detail' => 'Pending or driver offered', 'icon' => 'fa-solid fa-inbox', 'href' => route('admin.ride-requests.index')],
             ];
         @endphp

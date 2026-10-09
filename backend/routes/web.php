@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AdminLoginController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\DriverController;
 use App\Http\Controllers\Admin\LocationController;
@@ -27,7 +28,7 @@ Route::middleware('guest:admin')->prefix('admin')->name('admin.')->group(functio
 
 
 // Admin Routes
-Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth:admin', 'admin-active'])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -69,9 +70,18 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
     // Ratings
     Route::get('/ratings', [RatingController::class, 'index'])->name('ratings.index');
 
-    // Admin Users (read-only)
-    Route::get('/admins', [AdminUserController::class, 'index'])->name('admins.index');
-    Route::get('/admins/{admin}', [AdminUserController::class, 'show'])->name('admins.show');
+    Route::get('/account', [AdminProfileController::class, 'show'])->name('account.show');
+    Route::patch('/account', [AdminProfileController::class, 'updateDetails'])->name('account.update');
+    Route::patch('/account/password', [AdminProfileController::class, 'updatePassword'])->name('account.password');
+
+    Route::middleware('super-admin')->group(function () {
+        Route::get('/admins', [AdminUserController::class, 'index'])->name('admins.index');
+        Route::get('/admins/create', [AdminUserController::class, 'create'])->name('admins.create');
+        Route::post('/admins', [AdminUserController::class, 'store'])->name('admins.store');
+        Route::get('/admins/{admin}', [AdminUserController::class, 'show'])->name('admins.show');
+        Route::patch('/admins/{admin}/status', [AdminUserController::class, 'toggleStatus'])->name('admins.status');
+        Route::patch('/admins/{admin}/role', [AdminUserController::class, 'toggleRole'])->name('admins.role');
+    });
 
     // Locations
     Route::get('/locations', [LocationController::class, 'index'])->name('locations.index');

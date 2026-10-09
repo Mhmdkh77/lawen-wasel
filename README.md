@@ -3,7 +3,7 @@
 ![Laravel](https://img.shields.io/badge/Laravel-12.x-red)
 ![PHP](https://img.shields.io/badge/PHP-8.2+-blue)
 
-A Laravel-based ride-sharing platform for university students, connecting them with drivers for trips to and from their institutions. The system ships a RESTful API for mobile clients, a Livewire-powered admin panel, and route optimization via OpenRouteService.
+A Laravel-based ride-sharing platform for students traveling to and from their institutions. This repository contains the JSON API for passenger and driver clients and the Livewire admin panel; a mobile client is not included. The admin ride map combines OpenRouteService stop optimization with Google Maps route display.
 
 ## 🌟 Key Features
 
@@ -24,20 +24,21 @@ A Laravel-based ride-sharing platform for university students, connecting them w
 - **Driver Verification**: Admin-gated verification before a driver can publish rides or templates
 
 ### Admin Panel
-- **Dashboard Analytics**: Overview of users, rides, bookings, and locations
-- **User Management**: Monitor and manage both passengers and drivers
+- **Operations Dashboard**: Today's rides, active bookings, open requests, items needing attention, upcoming rides, and a seven-day schedule
+- **Passenger and Driver Profiles**: Inspect passenger and driver records
 - **Driver Verification**: Toggle driver verification status
+- **Admin Accounts**: Update your own name, email, and password; super admins can create accounts, change admin access, and disable or re-enable accounts
 - **Location Management**: CRUD operations for cities, stations, and institutions
-- **Ride Monitoring**: View ride details, optimized routes, and booking information
+- **Ride Monitoring**: View ride details, numbered driver checkpoints, road routes, and booking information
 - **Vehicle Oversight**: Review registered vehicles and their images
 - **Booking Tracking**: Monitor active and historical bookings
 
 ### Technical Features
 - **Multi-Step Registration**: Email-verification-code flow before account creation
-- **Role-Based Access Control**: Driver and passenger API middleware, plus a distinct admin auth guard
+- **Role-Based Access Control**: Driver and passenger API middleware, a distinct admin auth guard, and super admin restrictions for account management
 - **API Authentication**: Laravel Sanctum for token-based mobile API auth
 - **Geolocation Support**: GPS coordinates on users, locations, and ride pickup/dropoff nodes
-- **Google Maps Integration**: Reverse geocoding and admin-side route visualization
+- **Google Maps Integration**: Reverse geocoding, admin-side route visualization, and a road route fallback
 - **Route Optimization**: OpenRouteService integration for multi-stop route planning
 - **Conflict Prevention**: Detects duplicate/overlapping ride requests per passenger
 - **Transaction Safety**: Database transactions and row locking around booking/seat updates
@@ -92,7 +93,7 @@ php artisan key:generate
 On PowerShell, use `Copy-Item .env.example .env` instead of `cp`. The `.env` file stays local and should not be committed.
 
 ### 4. Configure the Database
-The repository already includes `database/database.sqlite` with migrated tables and demo data. The default `.env.example` configuration uses that file and stores sessions and cache in files, so normal page views do not change the tracked database. For a first run, you can proceed directly to the frontend build; there is no need to create the file, migrate, or seed it again.
+The repository already includes `database/database.sqlite` with migrated tables and demo data. The default `.env.example` configuration uses that file and stores sessions and cache in files, so normal page views do not change the tracked database. The database file is tracked by Git, so changes made while trying the app can appear in `git status`. For a first run, you can proceed directly to the frontend build; there is no need to create the file, migrate, or seed it again.
 
 To use a fresh MySQL database instead, create the database and edit `.env`:
 ```env
@@ -126,17 +127,17 @@ FIREBASE_PRIVATE_KEY=your_firebase_service_account_private_key
 
 The admin panel and API can start without either key. To display the admin ride map, configure a Google Cloud project with billing and the Maps JavaScript API. The map uses the [Routes Library](https://developers.google.com/maps/documentation/javascript/routes/start) when it needs Google to draw a road line, so enable the Routes API too. Reverse geocoding also needs the Geocoding API. The current code uses the same Google key in the browser and on the server, so a key restricted only to website referrers (such as `http://127.0.0.1:8000/*`) can break server-side geocoding. A production setup should change the configuration to use separately restricted browser and server keys.
 
-The ride page draws route geometry returned by OpenRouteService when available; otherwise it requests a route through Google's Routes Library. To optimize stop order, configure an OpenRouteService key with VROOM optimization access and allow the PHP server to reach `https://api.heigit.org/vroom/v0`. If routing is unavailable, the page still shows the saved stops in their existing order.
+The ride page displays numbered checkpoints in driver order: `S` for the start, green for pickup, orange for drop-off, and purple when different checkpoint types share a location. OpenRouteService can optimize the stop order and return road geometry. If it does not return geometry, Google's Routes Library tries to draw a road route through the displayed checkpoints. If road directions are unavailable from both services, a dashed orange line shows checkpoint order only; it is not a drivable route. Without OpenRouteService, the checkpoints follow their saved order. To enable optimization, configure an OpenRouteService key with VROOM access and allow the PHP server to reach `https://api.heigit.org/vroom/v0`.
 
 Restart the server after changing `.env` values; if configuration is cached, run `php artisan config:clear` first.
 
 The default `MAIL_MAILER=log` writes registration and password-reset codes to `storage/logs/laravel.log`. Configure SMTP in `.env` if you need real email delivery.
 
-### 6. Migrate a Fresh Database (Optional)
+### 6. Apply Database Migrations (Optional)
 ```bash
 php artisan migrate
 ```
-Run this when using a new empty database. The included SQLite demo database is already migrated. To deliberately rebuild a disposable demo database from scratch, `php artisan migrate:fresh --seed` deletes all existing tables and data before recreating them.
+Run this for a new empty database or to apply new migrations to an existing installation without clearing its data. The included SQLite demo database is already migrated. To deliberately rebuild a disposable demo database from scratch, `php artisan migrate:fresh --seed` deletes all existing tables and data before recreating them.
 
 ### 7. Seed a Fresh Database (Optional)
 ```bash
@@ -174,14 +175,22 @@ On Windows, use `./serve-fast.ps1` from `backend` for faster local page loads. I
 
 Access the admin panel at `http://localhost:8000/admin/login`. The app has no page at `/`.
 
+#### Admin accounts
+
+Every active admin can open **My Account** (`/admin/account`) to update their name, email, and password. Changing the email or password requires the current password; changing the password signs the admin out.
+
+Only a super admin can open **Admin Users** (`/admin/admins`) to create an admin with an initial password, grant or remove super admin access, and disable or re-enable an account. Disabled admins cannot sign in or continue an existing session. A super admin cannot disable or demote their own account. There is no email invitation flow for newly created admins.
+
+The seeded `admin@admin.com` account is a super admin; change its demo password before using the app beyond local development. When the admin-access migration runs on an existing database, it grants super admin access to the oldest admin account.
+
 ### 11. (Optional) Enable Recurring Ride Generation
-Driver-defined Ride Templates rely on a daily scheduled command to materialize the next day's rides:
+Driver-defined Ride Templates rely on a daily scheduled command to create rides for the current day. The command is scheduled for 00:05 in the app timezone:
 ```bash
 php artisan app:generate-daily-rides   # run manually, or:
 ```
 ```bash
-# crontab, for production
-* * * * * php artisan schedule:run >> /dev/null 2>&1
+# crontab, for production (run from the backend directory)
+* * * * * cd /path/to/lawen-wasel/backend && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 ## 📱 API Documentation
@@ -225,7 +234,7 @@ The migrations in `backend/database/migrations` are the source of truth for the 
 ### Core Tables
 
 - **users**: User accounts (passengers and drivers)
-- **admins**: Admin panel users
+- **admins**: Admin panel users, active status, and super admin access
 - **passengers** / **drivers**: Role-specific profile data
 - **vehicles** / **vehicle_images**: Driver vehicles and their photos
 - **locations**: Cities, stations, and institutions with GPS coordinates
@@ -239,7 +248,7 @@ The migrations in `backend/database/migrations` are the source of truth for the 
 
 ### Design Patterns
 - **Service Layer**: `LocationService` (geocoding, route optimization), `NotificationService` / `FirebaseService` (push notifications)
-- **Middleware Authentication**: `driver`, `driver-verified`, and `passenger` route middleware; a separate `admin` auth guard for the panel
+- **Middleware Authentication**: `driver`, `driver-verified`, and `passenger` API middleware; an `admin` auth guard with `admin-active` and `super-admin` middleware for the panel
 - **Eloquent Relationships**: `hasManyThrough` for driver → vehicle → ride ownership chains; many-to-many for location groups
 - **Database Transactions**: Booking/ride creation wraps multi-table writes in transactions with row locking on seat counts
 
@@ -253,11 +262,14 @@ The migrations in `backend/database/migrations` are the source of truth for the 
 - Password hashing (bcrypt)
 - Sanctum API token authentication
 - CSRF protection (admin panel)
+- Current-password checks for admin email and password changes, and blocked access for disabled admin accounts
 - Eloquent ORM parameter binding (SQL injection prevention)
 - Rate-limited auth/registration endpoints
 - Email verification before account activation
 
 ## 📂 Project Structure
+
+The paths below are relative to `backend/`.
 
 ```
 app/
@@ -291,4 +303,4 @@ resources/
 ```bash
 php artisan test
 ```
-The feature tests cover the login entry point, admin pages and pagination, showcase seed data, route checkpoints, driver ride-request access and acceptance, and multiple offers on a passenger request. Broader API coverage is still needed.
+The feature tests cover admin account changes, super admin permissions, disabled sessions, admin pages and pagination, showcase seed data, route checkpoints, driver ride-request access and acceptance, and multiple offers on a passenger request. Broader API coverage is still needed.

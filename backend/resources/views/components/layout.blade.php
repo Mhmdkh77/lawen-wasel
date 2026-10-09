@@ -25,7 +25,10 @@
             <x-sidebar-link route="admin.ratings.index" icon="fa-solid fa-star">Ratings</x-sidebar-link>
             <x-sidebar-link route="admin.locations.index" icon="fa-solid fa-location-dot">Locations</x-sidebar-link>
             <li class="my-2 mx-5 border-t border-gray-100"></li>
-            <x-sidebar-link route="admin.admins.index" icon="fa-solid fa-user-shield">Admin Users</x-sidebar-link>
+            <x-sidebar-link route="admin.account.show" icon="fa-solid fa-user-gear">My Account</x-sidebar-link>
+            @if (auth('admin')->user()->is_super_admin)
+               <x-sidebar-link route="admin.admins.index" icon="fa-solid fa-user-shield">Admin Users</x-sidebar-link>
+            @endif
          </ul>
       </nav>
 
@@ -35,7 +38,7 @@
                <button @click="sidebarOpen = true" class="lg:hidden text-ink-800 text-lg">
                   <i class="fa-solid fa-bars"></i>
                </button>
-               <p class="capitalize text-sm text-ink-800 font-medium">{{ auth('admin')->user()->name }}</p>
+               <a href="{{ route('admin.account.show') }}" class="text-sm font-medium text-ink-800 hover:text-brand-600">{{ auth('admin')->user()->name }}</a>
             </div>
 
             <form action="{{ route('admin.logout') }}" method="POST">

@@ -22,7 +22,8 @@ class DashboardController extends Controller
             'rides_today' => Ride::whereDate('scheduled_time', $today->toDateString())
                 ->where('status', '!=', 'canceled')->count(),
             'rides_in_progress' => Ride::where('status', 'active')->count(),
-            'active_bookings' => Booking::where('status', 'active')->count(),
+            'active_bookings' => Booking::where('status', 'active')
+                ->whereHas('ride', fn ($query) => $query->whereIn('status', ['pending', 'active']))->count(),
             'open_requests' => RideRequest::whereIn('status', ['pending', 'driver_offered'])->count(),
         ];
 
