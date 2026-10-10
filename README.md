@@ -5,6 +5,16 @@
 
 A Laravel-based ride-sharing platform for students traveling to and from their institutions. This repository contains the JSON API for passenger and driver clients and a Livewire admin panel; a mobile client is not included. The driver API can return optimized stops, while the admin ride page displays numbered checkpoints and a map.
 
+## Screenshots
+
+These screens were captured from a freshly seeded local demo database in October 2026. The names and accounts shown are demo data.
+
+![Admin dashboard with ride and request summaries](docs/screenshots/dashboard.png)
+
+![Ride map with numbered pickup and drop-off checkpoints](docs/screenshots/route_map.png)
+
+More views: [admin login](docs/screenshots/admin_login.png), [ride details and bookings](docs/screenshots/ride_detail.png), and [ride requests](docs/screenshots/ride_requests.png).
+
 ## 🌟 Key Features
 
 ### For Passengers

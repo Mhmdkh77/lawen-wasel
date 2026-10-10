@@ -24,4 +24,4 @@ Laravel 12, PHP, Eloquent, Sanctum, Livewire, Blade, Tailwind CSS, and SQLite fo
 
 ## Explore the code
 
-Start with the [README](../README.md) for local setup, [API route overview](API-docs.md), [web routes](../backend/routes/web.php), [API routes](../backend/routes/api.php), and [feature tests](../backend/tests/Feature). The schema is defined by [Laravel migrations](../backend/database/migrations).
+Start with the [README](../README.md) for local setup and current [screenshots](../README.md#screenshots), [API route overview](API-docs.md), [web routes](../backend/routes/web.php), [API routes](../backend/routes/api.php), and [feature tests](../backend/tests/Feature). The schema is defined by [Laravel migrations](../backend/database/migrations).
