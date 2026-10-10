@@ -38,7 +38,6 @@ class UserFactory extends Factory
             'phone_verified_at' => now(),
             'phone' => fake()->phoneNumber(),
             'password' => bcrypt('password'),
-            'remember_token' => Str::random(10),
             'role' => fake()->randomElement(['passenger', 'driver']),
             'gender' => fake()->randomElement(['male', 'female']),
             'latitude' => $city->latitude + fake()->randomFloat(6, -0.002, 0.002),
