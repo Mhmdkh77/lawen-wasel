@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 
 /**
@@ -25,7 +24,6 @@ class AdminFactory extends Factory
             'email_verified_at' => now(),
             'password' => Hash::make('password'),
             'gender' => fake()->randomElement(['male', 'female']),
-            'remember_token' => Str::random(10),
         ];
     }
 }
