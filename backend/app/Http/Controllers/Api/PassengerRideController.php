@@ -17,7 +17,6 @@ use App\Models\Driver;
 use App\Models\Node;
 use App\Models\RideOffer;
 use Illuminate\Support\Facades\DB;
-use App\Services\NotificationService;
 use App\Services\BookingStopService;
 use Illuminate\Support\Facades\Redis;
 
@@ -143,7 +142,7 @@ class PassengerRideController extends Controller
         ]);
     }
 
-    public function sendRideRequest(Request $request, NotificationService $notificationService)
+    public function sendRideRequest(Request $request)
     {
         $passenger = $request->user()->passenger;
 
@@ -273,20 +272,6 @@ class PassengerRideController extends Controller
             'status' => 'pending',
         ]);
 
-        // $deviceToken = Driver::where('id', $data['driver_id'])->first();
-
-        // if ($deviceToken) {
-        //     $notificationService->sendPush(
-        //         $deviceToken,
-        //         'New Ride Request',
-        //         'Your have new ride request',
-        //         [
-        //             'ride_request_id' => $rideRequest->id,
-        //             'status' => 'ended'
-        //         ]
-        //     );
-        // }
-
         return response()->json([
             'message' => 'Ride request submitted successfully.',
             'ride_request' => $rideRequest
@@ -362,7 +347,7 @@ class PassengerRideController extends Controller
         ]);
     }
 
-    public function cancelRideRequest(Request $request, RideRequest $rideRequest, NotificationService $notificationService)
+    public function cancelRideRequest(Request $request, RideRequest $rideRequest)
     {
         $passenger = $request->user()->passenger;
 
@@ -375,30 +360,6 @@ class PassengerRideController extends Controller
         }
 
         $rideRequest->update(['status' => 'canceled']);
-
-        $rideRequest->load([
-            'toInstRide.vehicle.driver',
-            'fromInstRide.vehicle.driver'
-        ]);
-
-        $drivers = collect([
-            optional($rideRequest->toInstRide->vehicle)->driver,
-            optional($rideRequest->fromInstRide->vehicle)->driver,
-        ])->filter()->unique('id');
-
-        foreach ($drivers as $driver) {
-            // if ($driver->device_token) {
-            //     $notificationService->sendPush(
-            //         $driver->device_token,
-            //         'Ride Request Canceled',
-            //         'A passenger has canceled a ride request.',
-            //         [
-            //             'ride_request_id' => $rideRequest->id,
-            //             'status' => 'canceled'
-            //         ]
-            //     );
-            // }
-        }
 
         return response()->json(['message' => 'Ride request canceled successfully.']);
     }
@@ -429,7 +390,7 @@ class PassengerRideController extends Controller
         return response()->json($rideOffer);
     }
 
-    public function acceptRideOffer(Request $request, RideOffer $rideOffer, NotificationService $notificationService, BookingStopService $bookingStopService)
+    public function acceptRideOffer(Request $request, RideOffer $rideOffer, BookingStopService $bookingStopService)
     {
         $passenger = $request->user()->passenger;
 
@@ -454,7 +415,7 @@ class PassengerRideController extends Controller
             return response()->json(['error' => 'This offer has already been responded to.'], 400);
         }
 
-        DB::transaction(function () use ($rideOffer, $passenger, $notificationService, $bookingStopService) {
+        DB::transaction(function () use ($rideOffer, $passenger, $bookingStopService) {
             // Update offer status
             $rideOffer->update(['status' => 'accepted']);
 
@@ -508,25 +469,12 @@ class PassengerRideController extends Controller
             // Create booking & node for from_institution ride (if present)
             $fromBooking = $createBookingAndNode($rideOffer->rideRequest->fromInstRide);
 
-            // Notify driver
-            $driver = $rideOffer->driver;
-            // if ($driver && $driver->device_token) {
-            //     $notificationService->sendPush(
-            //         $driver->device_token,
-            //         'Ride Offer Accepted',
-            //         'A passenger has accepted your ride offer.',
-            //         [
-            //             'ride_offer_id' => $rideOffer->id,
-            //             'status' => 'accepted',
-            //         ]
-            //     );
-            // }
         });
 
         return response()->json(['message' => 'Ride offer accepted and bookings created successfully.']);
     }
 
-    public function rejectRideOffer(Request $request, RideOffer $rideOffer, NotificationService $notificationService)
+    public function rejectRideOffer(Request $request, RideOffer $rideOffer)
     {
         $passenger = $request->user()->passenger;
 
@@ -545,19 +493,6 @@ class PassengerRideController extends Controller
         }
 
         $rideOffer->update(['status' => 'rejected']);
-
-        $driver = $rideOffer->driver;
-        // if ($driver && $driver->device_token) {
-        //     $notificationService->sendPush(
-        //         $driver->device_token,
-        //         'Ride Offer Rejected',
-        //         'A passenger has rejected your ride offer.',
-        //         [
-        //             'ride_offer_id' => $rideOffer->id,
-        //             'status' => 'rejected',
-        //         ]
-        //     );
-        // }
 
         return response()->json(['message' => 'Ride offer rejected successfully.']);
     }
@@ -616,7 +551,7 @@ class PassengerRideController extends Controller
         return response()->json($booking);
     }
 
-    public function cancelBooking(Request $request, Booking $booking, NotificationService $notificationService)
+    public function cancelBooking(Request $request, Booking $booking)
     {
         $passenger = $request->user()->passenger;
 
@@ -630,7 +565,7 @@ class PassengerRideController extends Controller
             ], 400);
         }
 
-        DB::transaction(function () use ($booking, $notificationService) {
+        DB::transaction(function () use ($booking) {
             $ride = $booking->ride;
             $seats = $booking->nb_seats;
 
@@ -648,18 +583,6 @@ class PassengerRideController extends Controller
             $ride->decrement('booked_seats', $seats);
             $ride->increment('available_seats', $seats);
 
-            $driver = $booking->ride->vehicle->driver ?? null;
-            // if ($driver && $driver->device_token) {
-            //     $notificationService->sendPush(
-            //         $driver->device_token,
-            //         'Booking Canceled',
-            //         'A passenger has canceled their booking.',
-            //         [
-            //             'booking_id' => $booking->id,
-            //             'status' => 'passenger_canceled',
-            //         ]
-            //     );
-            // }
         });
 
         return response()->json(['message' => 'Booking canceled successfully.']);

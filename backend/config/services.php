@@ -40,12 +40,6 @@ return [
         'optimization_url' => 'https://api.heigit.org/vroom/v0',
     ],
 
-    'twilio' => [
-        'sid' => env('TWILIO_SID'),
-        'token' => env('TWILIO_AUTH_TOKEN'),
-        'number' => env('TWILIO_PHONE_NUMBER'),
-    ],
-
     'google_maps' => [
         'api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],

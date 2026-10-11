@@ -35,7 +35,6 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'phone_verified_at' => now(),
             'phone' => fake()->phoneNumber(),
             'password' => bcrypt('password'),
             'role' => fake()->randomElement(['passenger', 'driver']),
@@ -43,7 +42,6 @@ class UserFactory extends Factory
             'latitude' => $city->latitude + fake()->randomFloat(6, -0.002, 0.002),
             'longitude' => $city->longitude + fake()->randomFloat(6, -0.002, 0.002),
             'city_id' => $city->id,
-            'device_token' => null,
             'image' => $randomFile
         ];
     }

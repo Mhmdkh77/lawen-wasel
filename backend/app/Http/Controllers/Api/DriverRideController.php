@@ -14,7 +14,6 @@ use App\Models\RideOffer;
 use App\Models\RideRequest;
 use App\Models\Vehicle;
 use App\Services\BookingStopService;
-use App\Services\NotificationService;
 use App\Services\LocationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,7 +69,7 @@ class DriverRideController extends Controller
     }
 
 
-    public function acceptRideRequest(Request $request, RideRequest $rideRequest, NotificationService $notificationService, BookingStopService $bookingStopService)
+    public function acceptRideRequest(Request $request, RideRequest $rideRequest, BookingStopService $bookingStopService)
     {
         $driver = $request->user()->driver;
 
@@ -90,7 +89,7 @@ class DriverRideController extends Controller
             return response()->json(['error' => 'This offer has already been responded to.'], 400);
         }
 
-        DB::transaction(function () use ($rideRequest, $notificationService, $bookingStopService) {
+        DB::transaction(function () use ($rideRequest, $bookingStopService) {
             // Update offer status
             $rideRequest->update(['status' => 'accepted']);
 
@@ -144,25 +143,12 @@ class DriverRideController extends Controller
             // Create booking & node for from_institution ride (if present)
             $fromBooking = $createBookingAndNode($rideRequest->fromInstRide);
 
-            // Notify driver
-            // $driver = $rideOffer->driver;
-            // if ($driver && $driver->device_token) {
-            //     $notificationService->sendPush(
-            //         $driver->device_token,
-            //         'Ride Offer Accepted',
-            //         'A passenger has accepted your ride offer.',
-            //         [
-            //             'ride_offer_id' => $rideOffer->id,
-            //             'status' => 'accepted',
-            //         ]
-            //     );
-            // }
         });
 
         return response()->json(['message' => 'Ride offer accepted and bookings created successfully.']);
     }
 
-    public function rejectRideRequest(Request $request, RideRequest $rideRequest, NotificationService $notificationService)
+    public function rejectRideRequest(Request $request, RideRequest $rideRequest)
     {
         $driver = $request->user()->driver;
 
@@ -178,21 +164,6 @@ class DriverRideController extends Controller
             'status' => 'rejected'
         ]);
 
-        $passenger = $rideRequest->passenger;
-        // $deviceToken = $passenger?->user?->device_token;
-
-        // if ($deviceToken) {
-        //     $notificationService->sendPush(
-        //         $deviceToken,
-        //         'Ride Request Rejected',
-        //         'Your ride request was rejected by the driver.',
-        //         [
-        //             'ride_request_id' => $rideRequest->id,
-        //             'status' => 'rejected'
-        //         ]
-        //     );
-        // }
-
         return response()->json(['message' => 'Ride Request Rejected']);
     }
 
@@ -205,7 +176,7 @@ class DriverRideController extends Controller
         return response()->json($rideOffers);
     }
 
-    public function sendOffer(Request $request, NotificationService $notificationService)
+    public function sendOffer(Request $request)
     {
         $request->validate([
             'ride_request_id' => 'required|exists:ride_requests,id',
@@ -240,21 +211,6 @@ class DriverRideController extends Controller
             'driver_message' => $request->driver_message,
             'status' => 'pending',
         ]);
-
-        $passenger = $rideRequest->passenger;
-        // $deviceToken = $passenger?->user?->device_token;
-
-        // if ($deviceToken) {
-        //     $notificationService->sendPush(
-        //         $deviceToken,
-        //         'New Ride Offer',
-        //         'You have new ride offer.',
-        //         [
-        //             'ride_offer_id' => $offer->id,
-        //             'status' => 'offered'
-        //         ]
-        //     );
-        // }
 
         return response()->json(['message' => 'Offer sent successfully', 'offer' => $offer]);
     }
@@ -446,7 +402,7 @@ class DriverRideController extends Controller
         ]);
     }
 
-    public function startRide(Request $request, Ride $ride, NotificationService $notificationService)
+    public function startRide(Request $request, Ride $ride)
     {
         $driver = $request->user()->driver;
 
@@ -478,31 +434,13 @@ class DriverRideController extends Controller
 
         $ride->load('passengers');
 
-        foreach ($ride->passengers as $passenger) {
-            // $deviceToken = $passenger?->user?->device_token;
-
-            // if ($deviceToken) {
-            //     $notificationService->sendPush(
-            //         $deviceToken,
-            //         'Ride Started',
-            //         'Your ride has started',
-            //         [
-            //             'ride_id' => $ride->id,
-            //             'status' => 'started'
-            //         ]
-            //     );
-            // }
-        }
-
-
-
         return response()->json([
             'message' => 'Ride started successfully',
             'ride' => $ride
         ]);
     }
 
-    public function finishRide(Request $request, Ride $ride, NotificationService $notificationService)
+    public function finishRide(Request $request, Ride $ride)
     {
 
         $driver = $request->user()->driver;
@@ -521,22 +459,6 @@ class DriverRideController extends Controller
         ]);
 
         $ride->load('passengers');
-
-        foreach ($ride->passengers as $passenger) {
-            // $deviceToken = $passenger?->user?->device_token;
-
-            // if ($deviceToken) {
-            //     $notificationService->sendPush(
-            //         $deviceToken,
-            //         'Ride Ended',
-            //         'Your ride has ended',
-            //         [
-            //             'ride_id' => $ride->id,
-            //             'status' => 'ended'
-            //         ]
-            //     );
-            // }
-        }
 
         return response()->json([
             'message' => 'Ride ended successfully',

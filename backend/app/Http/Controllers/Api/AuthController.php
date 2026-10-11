@@ -19,7 +19,6 @@ class AuthController extends Controller
         $request->validate([
             'login' => 'required',
             'password' => 'required',
-            'device_token' => 'nullable|string',
         ]);
 
         $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
@@ -31,10 +30,6 @@ class AuthController extends Controller
                 'email' => ['The credentials are incorrect.'],
             ]);
         }
-
-        $user->update([
-            'device_token' => $request->device_token,
-        ]);
 
         return response()->json([
             'user' => $user->fresh()->load(['driver']),

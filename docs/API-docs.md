@@ -1,6 +1,6 @@
 # Lawen Wasel API
 
-This is a route overview for the Laravel backend. The route definitions in [`backend/routes/api.php`](../backend/routes/api.php) and each controller's validation rules are the source of truth for request fields. There is no mobile client in this repository.
+This table covers the currently registered JSON API endpoints. The route definitions in [`backend/routes/api.php`](../backend/routes/api.php) and each controller's validation rules are the source of truth for request fields. There is no mobile client in this repository. To inspect the live route list, run `php artisan route:list --path=api` from `backend/`.
 
 Base URL when running locally: `http://127.0.0.1:8000/api`. Protected routes require `Authorization: Bearer <token>` from Laravel Sanctum. Registration and authentication routes are limited to 10 requests per minute.
 
@@ -28,7 +28,7 @@ curl -X POST http://127.0.0.1:8000/api/login \
   -d '{"login":"passenger@user.com","password":"pass"}'
 ```
 
-Phone verification has controller code, but its routes are disabled. It is not required by the current registration flow.
+Registration verifies email. A phone number is collected, but there is no phone-verification endpoint.
 
 ## Authenticated routes
 
@@ -61,7 +61,7 @@ All paths below start with `/passenger` and require a passenger account.
 | GET | `/bookings/{booking}` | View a booking |
 | PATCH | `/bookings/{booking}/cencel` | Cancel a booking; `cencel` is the current route spelling |
 
-The station routes are currently placeholders and are omitted from this supported-route list.
+Station and institution records are available through `GET /locations`; there are no separate passenger station endpoints.
 
 ### Driver routes
 
@@ -79,12 +79,11 @@ All paths below start with `/driver` and require a driver account. Ride, request
 | PATCH | `/ride-requests/{rideRequest}/reject` | Reject a request |
 | GET, POST | `/ride-offers` | List or send offers |
 | GET | `/ride-offers/{rideOffer}` | View an offer |
+| PUT | `/ride-offers/{rideOffer}` | Edit one of your pending offers |
 | GET, POST | `/rides` | List or create rides |
 | GET, PUT | `/rides/{ride}` | View or update a ride |
 | PATCH | `/rides/{ride}/start` | Start a ride |
 | PATCH | `/rides/{ride}/finish` | Finish a ride |
-
-`PUT /driver/ride-offers/{rideOffer}` is registered but its controller method is not implemented; do not depend on it.
 
 ## Admin panel
 

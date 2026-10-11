@@ -17,8 +17,6 @@ Route::prefix('register')->middleware('throttle:10,1')->controller(RegistrationC
     Route::post('/start', 'start');
     Route::post('/verify-email', 'verifyEmail');
     Route::post('/resend-verify-email', 'resendVerifyEmail');
-    // Route::post('/add-phone', 'addPhone');
-    // Route::post('/verify-phone', 'verifyPhone');
     Route::post('/finalize', 'finalize');
 });
 
@@ -84,13 +82,13 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('/ride-offers', 'rideOffers');
                 Route::post('/ride-offers', 'sendOffer');
                 Route::get('/ride-offers/{rideOffer}', 'rideOffer');
-                Route::put('/ride-offers/{rideOffer}', 'editRideOffer'); // To Do -----------
+                Route::put('/ride-offers/{rideOffer}', 'editRideOffer');
 
                 // Rides
                 Route::get('/rides', 'getRides');
                 Route::post('/rides', 'createRide');
                 Route::get('/rides/{ride}', 'getRide');
-                Route::put('/rides/{ride}', 'updateRide'); // To Do ------------
+                Route::put('/rides/{ride}', 'updateRide');
                 Route::patch('/rides/{ride}/start', 'startRide');
                 Route::patch('/rides/{ride}/finish', 'finishRide');
             });
@@ -124,9 +122,6 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/bookings/{booking}',  'getBooking');
             Route::patch('/bookings/{booking}/cencel',  'cancelBooking');
 
-            // Station
-            Route::get('/stations', 'getStations'); // To Do ------------
-            Route::get('/stations/{station}', 'getStation'); // To Do ------------
         });
     });
 });

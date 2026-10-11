@@ -71,10 +71,10 @@ class ShowcaseSeeder extends Seeder
     private function drivers(array $locations): array
     {
         $definitions = [
-            'mira' => ['Mira Haddad', 'showcase.mira@example.test', 'nabatieh', true, 'SHOW-101', 'Mercedes Sprinter', 'White', 6, 'bus01.jpg', 'pfp01.jpg'],
+            'mira' => ['Mira Haddad', 'showcase.mira@example.test', 'nabatieh', true, 'SHOW-101', 'Mercedes Sprinter', 'White', 6, 'bus01.jpg', null],
             'rami' => ['Rami Mansour', 'showcase.rami@example.test', 'habbouch', true, 'SHOW-202', 'Toyota Corolla', 'Silver', 4, 'bus02.jpg', 'pfp02.jpg'],
-            'leila' => ['Leila Saad', 'showcase.leila@example.test', 'kfar_roummane', true, 'SHOW-303', 'Hyundai Elantra', 'Blue', 4, 'bus03.jpg', 'pfp03.jpg'],
-            'karim' => ['Karim Nasser', 'showcase.karim@example.test', 'maifadoun', false, 'SHOW-404', 'Kia Carnival', 'Black', 6, 'bus04.jpg', 'pfp04.jpg'],
+            'leila' => ['Leila Saad', 'showcase.leila@example.test', 'kfar_roummane', true, 'SHOW-303', 'Hyundai Elantra', 'Blue', 4, 'bus03.jpg', null],
+            'karim' => ['Karim Nasser', 'showcase.karim@example.test', 'maifadoun', false, 'SHOW-404', 'Kia Carnival', 'Black', 6, 'bus04.jpg', null],
         ];
 
         $drivers = [];
@@ -90,8 +90,11 @@ class ShowcaseSeeder extends Seeder
                 'city_id' => $city->id,
                 'latitude' => $city->latitude,
                 'longitude' => $city->longitude,
-                'image' => 'profile_images/' . $profile,
+                'image' => $profile ? 'profile_images/' . $profile : null,
             ]);
+            if (in_array($user->image, ['profile_images/pfp01.jpg', 'profile_images/pfp03.jpg', 'profile_images/pfp04.jpg'], true)) {
+                $user->update(['image' => null]);
+            }
             $driver = Driver::firstOrCreate(['user_id' => $user->id], ['is_verified' => $verified]);
             $vehicle = Vehicle::firstOrCreate(['plate_number' => $plate], [
                 'driver_id' => $driver->id,
