@@ -77,7 +77,7 @@
                 <h3 class="text-base font-semibold text-ink-900">Driver license</h3>
                 <p class="mt-2 text-sm leading-6 text-gray-500">License document submitted with this driver account.</p>
                 @if ($user->driver->driver_license)
-                    <button id="open-license" type="button" class="mt-5 inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-semibold text-ink-900 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                    <button id="open-license" type="button" data-license-type="{{ strtolower(pathinfo($user->driver->driver_license, PATHINFO_EXTENSION)) === 'pdf' ? 'pdf' : 'image' }}" class="mt-5 inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-semibold text-ink-900 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
                         <i class="fa-regular fa-file-lines" aria-hidden="true"></i> View license
                     </button>
                 @else
@@ -134,10 +134,11 @@
 
         @if ($user->driver->driver_license)
             const licenseDialog = document.getElementById('license-dialog');
-            document.getElementById('open-license').addEventListener('click', () => {
+            const licenseButton = document.getElementById('open-license');
+            licenseButton.addEventListener('click', () => {
                 const url = @json(route('admin.drivers.license', $user));
                 const content = document.getElementById('license-content');
-                const viewer = document.createElement(url.toLowerCase().split('?')[0].endsWith('.pdf') ? 'iframe' : 'img');
+                const viewer = document.createElement(licenseButton.dataset.licenseType === 'pdf' ? 'iframe' : 'img');
                 viewer.src = url;
                 viewer.className = 'mx-auto max-h-[68vh] w-full rounded-lg object-contain';
                 viewer.title = 'Driver license';

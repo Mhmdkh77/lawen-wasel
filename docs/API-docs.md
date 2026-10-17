@@ -35,13 +35,16 @@ Registration verifies email. A phone number is collected, but there is no phone-
 | Method | Path | Purpose |
 | --- | --- | --- |
 | POST | `/user` | Get the current user profile |
-| PUT | `/user` | Update supported profile fields and uploads |
+| PUT | `/user` | Update supported profile fields sent as JSON or URL-encoded form fields |
+| POST | `/user` with `_method=PUT` | Update profile fields and multipart file uploads |
 | GET | `/user/driver-license` | Return the authenticated driver's private license document; requires a bearer token |
 | POST | `/user/change-password` | Change password using `current_password`, `new_password`, and `new_password_confirmation` |
 | POST | `/user/logout` | Revoke the user's tokens |
 | GET | `/locations` | List locations |
 
 Admin users view a driver's license through the session-protected `/admin/drivers/{user}/license` route. Existing uploads and bundled demo license illustrations are installed in private storage by the privacy migrations.
+
+For profile image or driver license uploads, send a multipart **POST** to `/user` with `_method=PUT` as a form field. PHP does not parse files from a multipart `PUT`; the API rejects that request instead of reporting a successful update.
 
 ### Passenger routes
 

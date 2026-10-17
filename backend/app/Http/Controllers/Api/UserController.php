@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Driver;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use App\Services\LocationService;
@@ -43,7 +44,19 @@ class UserController extends Controller
 
     public function updateUser(Request $request)
     {
-        $user = $request->user();
+        if ($request->getRealMethod() === 'PUT'
+            && str_starts_with(strtolower($request->header('Content-Type', '')), 'multipart/form-data')) {
+            return response()->json([
+                'message' => 'Multipart PUT files are not parsed by PHP. Send a multipart POST to /api/user with _method=PUT.',
+            ], 415);
+        }
+
+        $user = $request->user()->fresh();
+
+        if ($request->hasFile('driver_license')
+            && ($user->role !== 'driver' || $user->driver?->is_verified)) {
+            return response()->json(['message' => 'This driver license cannot be updated.'], 403);
+        }
 
         $rules = [
             'name' => 'sometimes|string|max:255',
@@ -99,7 +112,10 @@ class UserController extends Controller
                 if (!empty($updateData)) {
                     $driver->update($updateData);
 
-                    if (isset($licensePath, $oldLicensePath) && $oldLicensePath !== $licensePath) {
+                    if (isset($licensePath, $oldLicensePath)
+                        && $oldLicensePath !== $licensePath
+                        && ! DriverLicenseStorage::isDemoFile($oldLicensePath)
+                        && ! Driver::where('driver_license', $oldLicensePath)->exists()) {
                         Storage::disk('local')->delete($oldLicensePath);
                     }
                 }
