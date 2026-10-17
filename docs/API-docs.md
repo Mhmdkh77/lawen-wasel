@@ -41,7 +41,7 @@ Registration verifies email. A phone number is collected, but there is no phone-
 | POST | `/user/logout` | Revoke the user's tokens |
 | GET | `/locations` | List locations |
 
-Admin users view a driver's license through the session-protected `/admin/drivers/{user}/license` route. Existing uploaded licenses are moved out of public storage by the privacy migration; bundled demo illustrations remain public.
+Admin users view a driver's license through the session-protected `/admin/drivers/{user}/license` route. Existing uploads and bundled demo license illustrations are installed in private storage by the privacy migrations.
 
 ### Passenger routes
 

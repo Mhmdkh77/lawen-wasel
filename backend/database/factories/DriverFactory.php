@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Services\DemoDriverLicenseFixtures;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Driver>
@@ -19,10 +19,8 @@ class DriverFactory extends Factory
     public function definition(): array
     {
 
-        $files =    Storage::disk('public')->files('driver_licenses');
-        $randomFile = fake()->randomElement($files);
-
-
+        DemoDriverLicenseFixtures::install();
+        $randomFile = fake()->randomElement(DemoDriverLicenseFixtures::paths());
         return [
             'user_id' => User::factory()->state(['role' => 'driver']),
             'driver_license' => $randomFile,

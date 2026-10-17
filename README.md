@@ -185,7 +185,7 @@ The showcase seeder can be run again without duplicating its records.
 php artisan storage:link
 ```
 
-Required for public vehicle and profile images. Driver license uploads use private storage and are viewed through authenticated routes.
+Required for public vehicle and profile images. All driver license images use private storage and are viewed through authenticated routes.
 
 ### 9. Build Frontend Assets
 
@@ -341,11 +341,11 @@ lawen-wasel/
     ├── database/
     │   ├── factories/
     │   ├── migrations/
-    │   └── seeders/          # Demo data and location CSV
+    │   └── seeders/          # Demo data, private license fixtures, and location CSV
     ├── public/               # Web entry point
     ├── resources/            # CSS, JavaScript, SVG logo, and Blade views
     ├── routes/               # api.php, web.php, console.php
-    ├── storage/app/public/   # Bundled demo illustrations; uploads are ignored
+    ├── storage/app/public/   # Public profile and vehicle illustrations; uploads are ignored
     ├── tests/                # Feature tests
     ├── artisan
     ├── composer.json

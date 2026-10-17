@@ -26,10 +26,6 @@ class DriverLicenseStorage
 
         $disk = Storage::disk('local');
 
-        if (! $disk->exists($path) && self::isDemoFile($path)) {
-            $disk = Storage::disk('public');
-        }
-
         abort_unless($disk->exists($path), 404);
 
         return $disk->response($path, null, [

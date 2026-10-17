@@ -3,6 +3,7 @@
 use App\Models\Admin;
 use App\Models\Driver;
 use App\Models\User;
+use App\Services\DemoDriverLicenseFixtures;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -51,11 +52,11 @@ test('uploaded driver licenses are private and require driver or admin authentic
         ->assertOk();
 });
 
-test('the license migration moves older uploads but keeps public demo illustrations', function () {
+test('the license migrations move older uploads and demo illustrations out of public storage', function () {
     Storage::fake('local');
     Storage::fake('public');
     Storage::disk('public')->put('driver_licenses/old-upload.jpg', 'private document');
-    Storage::disk('public')->put('driver_licenses/dl1.jpg', 'demo illustration');
+    Storage::disk('public')->put('driver_licenses/dl1.jpg', file_get_contents(database_path('seeders/assets/driver_licenses/dl1.jpg')));
 
     $migration = require database_path('migrations/2026_10_17_000000_move_uploaded_driver_licenses_to_private_storage.php');
     $migration->up();
@@ -63,4 +64,24 @@ test('the license migration moves older uploads but keeps public demo illustrati
     Storage::disk('local')->assertExists('driver_licenses/old-upload.jpg');
     Storage::disk('public')->assertMissing('driver_licenses/old-upload.jpg');
     Storage::disk('public')->assertExists('driver_licenses/dl1.jpg');
+
+    $demoMigration = require database_path('migrations/2026_10_17_000001_move_demo_driver_licenses_to_private_storage.php');
+    $demoMigration->up();
+
+    foreach (DemoDriverLicenseFixtures::paths() as $path) {
+        Storage::disk('local')->assertExists($path);
+        Storage::disk('public')->assertMissing($path);
+    }
+});
+
+test('the driver factory chooses only bundled private demo licenses', function () {
+    Storage::fake('local');
+    Storage::fake('public');
+    Storage::disk('local')->put('driver_licenses/user-upload.pdf', 'private document');
+
+    $path = Driver::factory()->definition()['driver_license'];
+
+    expect($path)->toBeIn(DemoDriverLicenseFixtures::paths());
+    Storage::disk('local')->assertExists($path);
+    Storage::disk('public')->assertMissing($path);
 });
