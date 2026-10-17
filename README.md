@@ -3,7 +3,7 @@
 ![Laravel](https://img.shields.io/badge/Laravel-12.x-red)
 ![PHP](https://img.shields.io/badge/PHP-8.2+-blue)
 
-A Laravel-based ride-sharing platform for students traveling to and from their institutions. This repository contains the JSON API for passenger and driver clients and a Livewire admin panel; a mobile client is not included. Passengers can search, request, and book rides, drivers can manage vehicles and offers, and admins can monitor the operation.
+A Laravel-based ride-sharing platform for students traveling to and from their institutions. This repository contains the API for passenger and driver clients and a Livewire admin panel; a mobile client is not included. Passengers can search, request, and book rides, drivers can manage vehicles and offers, and admins can monitor the operation.
 
 ## Screenshots
 

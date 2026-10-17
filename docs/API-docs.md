@@ -42,7 +42,7 @@ Registration verifies email. A phone number is collected, but there is no phone-
 | POST | `/user/logout` | Revoke the user's tokens |
 | GET | `/locations` | List locations |
 
-Admin users view a driver's license through the session-protected `/admin/drivers/{user}/license` route. Existing uploads and bundled demo license illustrations are installed in private storage by the privacy migrations.
+Admin users view a driver's license through the session-protected `/admin/drivers/{user}/license` route. Driver licenses are stored privately and can be viewed only through authenticated routes.
 
 For profile image or driver license uploads, send a multipart **POST** to `/user` with `_method=PUT` as a form field. PHP does not parse files from a multipart `PUT`; the API rejects that request instead of reporting a successful update.
 
