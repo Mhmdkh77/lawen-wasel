@@ -135,7 +135,7 @@
         @if ($user->driver->driver_license)
             const licenseDialog = document.getElementById('license-dialog');
             document.getElementById('open-license').addEventListener('click', () => {
-                const url = @json(Storage::url($user->driver->driver_license));
+                const url = @json(route('admin.drivers.license', $user));
                 const content = document.getElementById('license-content');
                 const viewer = document.createElement(url.toLowerCase().split('?')[0].endsWith('.pdf') ? 'iframe' : 'img');
                 viewer.src = url;

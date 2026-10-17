@@ -108,6 +108,12 @@ class VehicleController extends Controller
     {
         $this->authorize('rud', $vehicle);
 
+        if ($vehicle->rides()->exists() || $vehicle->rideTemplates()->exists()) {
+            return response()->json([
+                'message' => 'This vehicle is used by a ride or ride template and cannot be deleted.',
+            ], 409);
+        }
+
         foreach ($vehicle->images as $image) {
             Storage::disk('public')->delete($image->path);
         }

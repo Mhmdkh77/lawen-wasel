@@ -1,9 +1,20 @@
 # Project materials and presentation documents
 /project_materials/
+/PORTFOLIO_NOTES.md
 
 # Sensitive credentials (in case placed in root)
 firebase_credentials.json
 google-services.json
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.p12
+*.pfx
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
 
 # Local OS files
 .DS_Store

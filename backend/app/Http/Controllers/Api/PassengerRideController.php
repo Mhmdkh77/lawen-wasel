@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Location;
 use App\Models\RideGroup;
-use App\Services\LocationService;
+use App\Services\PickupCityResolver;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\RideRequest;
@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Redis;
 
 class PassengerRideController extends Controller
 {
-    public function search(Request $request)
+    public function search(Request $request, PickupCityResolver $cityResolver)
     {
 
         $data = $request->validate([
@@ -34,18 +34,14 @@ class PassengerRideController extends Controller
             'nb_seats' => 'required|integer|min:1',
         ]);
 
-        // $locationService = new LocationService();
-        // $cityName = $locationService->getCityNameFromCoordinates($data['passenger_latitude'], $data['passenger_longitude']);
-        // $passengerCity =  Location::where('type', 'city')
-        //     ->whereRaw('LOWER(name) = ?', [strtolower($cityName)])
-        //     ->first();
+        $passengerCity = $cityResolver->nearestSupportedCity(
+            (float) $data['passenger_latitude'],
+            (float) $data['passenger_longitude'],
+        );
 
-        // if (!$passengerCity) {
-        //     return response()->json([
-        //         'message' => 'City not supported',
-        //         'city' => $cityName
-        //     ], 422);
-        // }
+        if (! $passengerCity) {
+            return response()->json(['message' => 'Pickup location is outside the supported cities.'], 422);
+        }
 
         $arrivalFrom = Carbon::parse($data['arrival_time'])->subHour();
         $arrivalTo = Carbon::parse($data['arrival_time'])->addHour();
@@ -53,42 +49,47 @@ class PassengerRideController extends Controller
 
         $institutionLocation = Location::findOrFail($data['institution_location_id']);
 
-        $rideGroups = RideGroup::with(['rides' => function ($q) use ($arrivalFrom, $arrivalTo, $data) {
+        $matchingOutbound = function ($q) use ($arrivalFrom, $arrivalTo, $data) {
             $q->whereBetween('scheduled_time', [$arrivalFrom, $arrivalTo])
                 ->where('type', 'to_institution')
+                ->where('status', 'pending')
                 ->where('available_seats', '>=', $data['nb_seats']);
-        }])
-            // ->whereHas('locationGroup.locations', function ($q) use ($passengerCity) {
-            //     $q->where('location_type', 'passenger')
-            //         ->where(function ($q2) use ($passengerCity) {
-            //             $q2->where('id', $passengerCity->id)
-            //                 ->orWhere('city_id', $passengerCity->city_id);
-            //         });
-            // })
-            ->whereHas('locationGroup.locations', function ($q) use ($institutionLocation) {
-                $q->where('location_type', 'institution')
-                    ->where(function ($q2) use ($institutionLocation) {
-                        $q2->where('locations.id', $institutionLocation->id)
-                            ->orWhere('locations.city_id', $institutionLocation->city_id);
+        };
+
+        $rideGroups = RideGroup::query()
+            ->whereHas('rides', $matchingOutbound)
+            ->whereHas('locationGroup.locations', function ($q) use ($passengerCity) {
+                $q->where('location_group_location_rel.location_type', 'passenger')
+                    ->where(function ($pickup) use ($passengerCity) {
+                        $pickup->where('locations.id', $passengerCity->id)
+                            ->orWhere('locations.city_id', $passengerCity->id);
                     });
-            })->limit(50)
-            ->get();
+            })
+            ->whereHas('locationGroup.locations', function ($q) use ($institutionLocation) {
+                $q->where('location_group_location_rel.location_type', 'institution')
+                    ->where(function ($q2) use ($institutionLocation) {
+                        $q2->where('locations.id', $institutionLocation->id);
+                        if ($institutionLocation->city_id !== null) {
+                            $q2->orWhere('locations.city_id', $institutionLocation->city_id);
+                        }
+                    });
+            });
 
 
         if (array_key_exists('return_time', $data) && $data['return_time']) {
             $returnFrom = Carbon::parse($data['return_time'])->subHour();
             $returnTo = Carbon::parse($data['return_time'])->addHour();
 
-            $rideGroups = $rideGroups->filter(function ($group) use ($returnFrom, $returnTo, $data) {
-                return $group->rides()
+            $rideGroups->whereHas('rides', function ($rides) use ($returnFrom, $returnTo, $data) {
+                $rides
                     ->whereBetween('scheduled_time', [$returnFrom, $returnTo])
                     ->where('type', 'from_institution')
-                    ->where('available_seats', '>=', $data['nb_seats'])
-                    ->exists();
-            })->values();
+                    ->where('status', 'pending')
+                    ->where('available_seats', '>=', $data['nb_seats']);
+            });
         }
 
-        return response()->json($rideGroups);
+        return response()->json($rideGroups->with(['rides' => $matchingOutbound])->limit(50)->get());
     }
 
     public function showRideGroup(Request $request, RideGroup $rideGroup)

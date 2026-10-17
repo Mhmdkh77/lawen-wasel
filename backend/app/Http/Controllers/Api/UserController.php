@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Services\LocationService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use App\Services\DriverLicenseStorage;
 
 class UserController extends Controller
 {
@@ -18,8 +19,8 @@ class UserController extends Controller
         if ($user->role === 'driver') {
             $user->load('driver.vehicles');
 
-            $driverLicenseUrl = $user->driver && $user->driver->driver_license_path
-                ? Storage::url($user->driver->driver_license_path)
+            $driverLicenseUrl = $user->driver && $user->driver->driver_license
+                ? route('api.user.driver-license')
                 : null;
         } elseif ($user->role === 'passenger') {
             $user->load('passenger');
@@ -33,6 +34,11 @@ class UserController extends Controller
             'image' => $user->image ? Storage::url($user->image) : null,
             'driver_license_url' => $driverLicenseUrl,
         ]);
+    }
+
+    public function driverLicense(Request $request, DriverLicenseStorage $storage)
+    {
+        return $storage->response($request->user()->driver?->driver_license);
     }
 
     public function updateUser(Request $request)
@@ -85,12 +91,17 @@ class UserController extends Controller
 
                 // Handle driver license file upload if not verified
                 if (!$driver->is_verified && $request->hasFile('driver_license')) {
-                    $licensePath = $request->file('driver_license')->store('driver_licenses', 'public');
+                    $oldLicensePath = $driver->driver_license;
+                    $licensePath = $request->file('driver_license')->store('driver_licenses', 'local');
                     $updateData['driver_license'] = $licensePath;
                 }
 
                 if (!empty($updateData)) {
                     $driver->update($updateData);
+
+                    if (isset($licensePath, $oldLicensePath) && $oldLicensePath !== $licensePath) {
+                        Storage::disk('local')->delete($oldLicensePath);
+                    }
                 }
             }
         }

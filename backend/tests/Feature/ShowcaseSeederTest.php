@@ -10,12 +10,16 @@ use App\Models\RideRequest;
 use App\Models\RideTemplate;
 use App\Models\RideTemplateGroup;
 use App\Models\User;
+use App\Models\Vehicle;
+use App\Models\LocationGroup;
 use Database\Seeders\ShowcaseSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Carbon\Carbon;
+use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
 
@@ -127,21 +131,101 @@ test('default seed includes the named showcase', function () {
             })->count())->toBe(0);
 });
 
-test('showcase recurring templates generate one ride per direction for a scheduled day', function () {
+test('recurring templates keep seven days of rides available without duplicates', function () {
+    $this->travelTo(Carbon::parse('2026-10-16 06:00:00'));
     $this->seed(ShowcaseSeeder::class);
 
     $group = RideTemplateGroup::where('name', 'Showcase | Campus commute')->firstOrFail();
-    foreach ($group->rideTemplates as $template) {
-        $template->update(['recurring_days' => [strtolower(now()->format('l'))]]);
-    }
+    $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    $templates = $group->rideTemplates;
+    $templates[0]->update(['recurring_days' => $days, 'scheduled_time' => '10:00']);
+    $templates[1]->update(['recurring_days' => $days, 'scheduled_time' => '18:00']);
+    $extra = RideTemplate::create([
+        'ride_template_group_id' => $group->id,
+        'vehicle_id' => $templates[0]->vehicle_id,
+        'type' => $templates[0]->type,
+        'scheduled_time' => '11:00',
+        'recurring_days' => $days,
+        'is_active' => true,
+    ]);
+    $paused = RideTemplateGroup::where('name', 'Showcase | Weekend service paused')->firstOrFail()
+        ->rideTemplates()->firstOrFail();
+    $paused->update(['is_active' => true, 'recurring_days' => $days]);
 
     Artisan::call('app:generate-daily-rides');
-    $todayRides = Ride::where('vehicle_id', $group->rideTemplates->first()->vehicle_id)
-        ->whereDate('scheduled_time', today());
-    expect($todayRides->count())->toBe(2);
+    $generated = Ride::whereIn('ride_template_id', $templates->pluck('id')->push($extra->id));
+    expect($generated->count())->toBe(21)
+        ->and((clone $generated)->whereDate('scheduled_time', today()->addDays(6))->count())->toBe(3)
+        ->and((clone $generated)->whereDate('scheduled_time', today()->addDays(7))->count())->toBe(0)
+        ->and(Ride::where('ride_template_id', $paused->id)->count())->toBe(0);
 
     Artisan::call('app:generate-daily-rides');
-    expect($todayRides->count())->toBe(2);
+    expect($generated->count())->toBe(21);
+
+    $this->travelTo(Carbon::parse('2026-10-17 06:00:00'));
+    Artisan::call('app:generate-daily-rides');
+    expect($generated->count())->toBe(24);
+});
+
+test('creating a ride template immediately opens the seven day booking window', function () {
+    $this->travelTo(Carbon::parse('2026-10-16 06:00:00'));
+    $this->seed(ShowcaseSeeder::class);
+
+    $existing = RideTemplateGroup::where('name', 'Showcase | Campus commute')->firstOrFail();
+    Sanctum::actingAs(User::where('email', 'showcase.mira@example.test')->firstOrFail());
+
+    $this->postJson('/api/driver/ride-template-groups', [
+        'name' => 'Advance booking example',
+        'ride_templates' => [[
+            'vehicle_id' => $existing->rideTemplates->first()->vehicle_id,
+            'scheduled_time' => '12:00',
+            'recurring_days' => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+            'type' => 'to_institution',
+        ]],
+        'locations' => $existing->locationGroup->locations->map(fn ($location) => [
+            'id' => $location->id,
+            'type' => $location->pivot->location_type,
+        ])->all(),
+    ])->assertOk();
+
+    $newTemplate = RideTemplateGroup::where('name', 'Advance booking example')->firstOrFail()
+        ->rideTemplates()->firstOrFail();
+    expect(Ride::where('ride_template_id', $newTemplate->id)->count())->toBe(7);
+});
+
+test('constraints preserve rides and allow safe template group and vehicle deletion', function () {
+    $this->seed(ShowcaseSeeder::class);
+
+    $driver = User::where('email', 'showcase.mira@example.test')->firstOrFail();
+    Sanctum::actingAs($driver);
+
+    $group = RideTemplateGroup::where('name', 'Showcase | Campus commute')->firstOrFail();
+    $locationGroupId = $group->location_group_id;
+    $locationCount = $group->locationGroup->locations()->count();
+    $templateIds = $group->rideTemplates()->pluck('id');
+    $generatedRideIds = Ride::whereIn('ride_template_id', $templateIds)->pluck('id');
+
+    $this->getJson("/api/driver/ride-template-groups/{$group->id}")
+        ->assertOk()
+        ->assertJsonPath('ride_template_group.id', $group->id);
+    $this->deleteJson("/api/driver/ride-template-groups/{$group->id}")->assertOk();
+    expect(RideTemplateGroup::whereKey($group->id)->exists())->toBeFalse()
+        ->and(LocationGroup::whereKey($locationGroupId)->exists())->toBeTrue()
+        ->and(LocationGroup::findOrFail($locationGroupId)->locations()->count())->toBe($locationCount)
+        ->and(Ride::whereKey($generatedRideIds)->count())->toBe($generatedRideIds->count());
+
+    $usedVehicle = $driver->driver->vehicles()->whereHas('rides')->firstOrFail();
+    $this->deleteJson("/api/driver/vehicles/{$usedVehicle->id}")->assertStatus(409);
+    expect(Vehicle::whereKey($usedVehicle->id)->exists())->toBeTrue();
+
+    $unusedVehicle = $driver->driver->vehicles()->create([
+        'plate_number' => 'SCHEMA-UNUSED',
+        'brand' => 'Test',
+        'color' => 'White',
+        'capacity' => 4,
+    ]);
+    $this->deleteJson("/api/driver/vehicles/{$unusedVehicle->id}")->assertOk();
+    expect(Vehicle::whereKey($unusedVehicle->id)->exists())->toBeFalse();
 });
 
 test('numbered checkpoints follow the optimized pickup and drop-off order', function () {

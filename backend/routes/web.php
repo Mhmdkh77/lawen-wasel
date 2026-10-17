@@ -41,6 +41,7 @@ Route::middleware(['auth:admin', 'admin-active'])->prefix('admin')->name('admin.
     // Drivers
     Route::get('/drivers', [DriverController::class, 'index'])->name('drivers.index');
     Route::get('/drivers/{user}', [DriverController::class, 'show'])->name('drivers.show');
+    Route::get('/drivers/{user}/license', [DriverController::class, 'license'])->name('drivers.license');
     Route::post('/drivers/{driver}/toggle-verification', [DriverController::class, 'toggleVerification'])->name('drivers.toggle-verification');
 
     // Rides

@@ -1,8 +1,23 @@
 *
 !.gitignore
 !driver_licenses/
-!driver_licenses/**
 !profile_images/
-!profile_images/**
 !vehicle_images/
-!vehicle_images/**
+
+# Only bundled demo illustrations belong in Git. Uploaded user files stay local.
+!driver_licenses/dl1.jpg
+!driver_licenses/dl2.jpg
+!driver_licenses/dl3.jpg
+!driver_licenses/dl4.jpg
+!driver_licenses/dl5.jpg
+!profile_images/pfp01.jpg
+!profile_images/pfp02.jpg
+!profile_images/pfp03.jpg
+!profile_images/pfp04.jpg
+!profile_images/pfp05.webp
+!vehicle_images/bus01.jpg
+!vehicle_images/bus02.jpg
+!vehicle_images/bus03.jpg
+!vehicle_images/bus04.jpg
+!vehicle_images/bus05.jpg
+!vehicle_images/bus06.jpg

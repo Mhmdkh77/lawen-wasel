@@ -6,13 +6,17 @@
                <div class="pointer-events-none absolute -right-36 -top-40 h-[34rem] w-[34rem] rounded-full border-[5rem] border-white/35" aria-hidden="true"></div>
                <div class="pointer-events-none absolute -bottom-52 -left-44 h-[36rem] w-[36rem] rounded-full border-[5rem] border-white/30" aria-hidden="true"></div>
 
-               <img src="{{ Vite::asset('resources/images/logo.png') }}" class="relative h-48 w-full max-w-[600px] object-cover object-center" alt="Lawen Wasel">
+               <div class="relative flex items-center gap-6">
+                  <img src="{{ Vite::asset('resources/images/logo.svg') }}" class="h-28 w-28 object-contain" alt="" aria-hidden="true">
+                  <span class="text-5xl font-semibold tracking-tight text-ink-900">Lawen Wasel</span>
+               </div>
             </section>
 
             <section class="flex min-h-screen items-center px-6 py-12 sm:px-12 lg:px-14 xl:px-20" aria-labelledby="login-heading">
                <div class="mx-auto w-full max-w-[430px]">
-                  <div class="mb-12 lg:hidden">
-                     <img src="{{ Vite::asset('resources/images/logo.png') }}" class="h-24 w-72 max-w-full object-cover object-center" alt="Lawen Wasel">
+                  <div class="mb-12 flex items-center gap-3 lg:hidden">
+                     <img src="{{ Vite::asset('resources/images/logo.svg') }}" class="h-16 w-16 object-contain" alt="" aria-hidden="true">
+                     <span class="text-2xl font-semibold tracking-tight text-ink-900">Lawen Wasel</span>
                   </div>
 
                   <h1 id="login-heading" class="text-3xl font-semibold tracking-tight text-ink-900">Admin login</h1>

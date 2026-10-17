@@ -9,7 +9,7 @@
       <nav class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 flex flex-col shadow-md transform transition-transform duration-200 ease-in-out lg:static lg:translate-x-0"
          :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
          <div class="flex items-center gap-2 px-5 py-5 border-b border-gray-100">
-            <img src="{{ Vite::asset('resources/images/logo.png') }}" class="w-10" alt="Logo">
+            <img src="{{ Vite::asset('resources/images/logo.svg') }}" class="w-10" alt="Logo">
             <span class="font-semibold text-ink-900">Lawen Wasel</span>
          </div>
          <ul class="space-y-1 w-full py-4 overflow-y-auto">

@@ -19,7 +19,7 @@ More views: [admin login](docs/screenshots/admin_login.png), [ride details and b
 
 ### For Passengers
 
-- **Smart Ride Search**: Search available rides by arrival/return time windows, seat count, and institution
+- **Smart Ride Search**: Search available rides by pickup city, arrival/return time windows, seat count, and institution
 - **Ride Requests**: Submit ride requests with a pickup location and institution destination
 - **Negotiation System**: Receive and accept custom driver offers with suggested pickup points and pricing
 - **Booking Management**: Track active bookings, view ride details, and cancel reservations
@@ -28,7 +28,7 @@ More views: [admin login](docs/screenshots/admin_login.png), [ride details and b
 ### For Drivers
 
 - **Vehicle Management**: Register and manage multiple vehicles with image galleries
-- **Ride Templates**: Define recurring weekly schedules; the scheduled command generates rides when Laravel's scheduler is running
+- **Ride Templates**: Define recurring weekly schedules; active templates keep the next seven days of rides available when Laravel's scheduler is running
 - **Dynamic Ride Creation**: Set up one-time rides with a specific vehicle, time, and stop list
 - **Ride Request Handling**: Review incoming passenger requests and accept/reject them
 - **Custom Offers**: Send personalized ride offers with suggested pickup locations and pricing
@@ -73,7 +73,7 @@ More views: [admin login](docs/screenshots/admin_login.png), [ride details and b
 
 - PHP 8.2 or higher
 - Composer
-- SQLite (default) or MySQL/PostgreSQL
+- SQLite (tested default); MySQL/PostgreSQL migrations have not been verified
 - Node.js and NPM (for admin panel frontend assets)
 - _(Optional)_ Google Maps API key for the admin ride map and reverse geocoding
 - _(Optional)_ OpenRouteService API key for optimized stop order and route geometry
@@ -167,7 +167,7 @@ Run this for a new database or to apply new migrations to an existing installati
 php artisan db:seed
 ```
 
-Run this only once after migrating a fresh local database. Re-running the full seeder can duplicate the demo admin and fail. It creates a demo admin (`admin@admin.com` / `admin`), passenger (`passenger@user.com` / `pass`), and driver (`driver@user.com` / `pass`), plus sample locations, vehicles, and rides. See `database/seeders/DatabaseSeeder.php`. These passwords are visible in this public repository, so do not expose the seeded accounts on a public server.
+Run this only once after migrating a fresh local database. Re-running the full seeder can duplicate the demo admin and fail. It creates a demo admin (`admin@admin.com` / `admin`), passenger (`passenger@user.com` / `pass`), and driver (`driver@user.com` / `pass`), plus sample locations, vehicles, and rides. See `database/seeders/DatabaseSeeder.php`. Change the demo credentials before exposing an instance publicly.
 
 The seed also adds connected examples around Nabatieh so the admin pages show more than empty tables: pooled and round-trip bookings, rides in different statuses, competing driver offers, reviewed rides, vehicle photos, and recurring templates. These are examples of seed data, not the full feature list. Look for `SHOW-` vehicle plates and `Showcase |` template groups in the admin panel. Showcase users have `showcase.<name>@example.test` emails and the demo password `pass`.
 
@@ -185,7 +185,7 @@ The showcase seeder can be run again without duplicating its records.
 php artisan storage:link
 ```
 
-Required for vehicle images, profile pictures, and driver license uploads to resolve to a working URL.
+Required for public vehicle and profile images. Driver license uploads use private storage and are viewed through authenticated routes.
 
 ### 9. Build Frontend Assets
 
@@ -219,7 +219,7 @@ The repository is configured for local development and does not currently includ
 
 ### 11. (Optional) Enable Recurring Ride Generation
 
-Driver-defined Ride Templates rely on a daily scheduled command to create rides for the current day. The command is scheduled for 00:05 in the app timezone:
+Creating a Ride Template makes matching rides available for the next seven calendar days, including today when its departure time has not passed. A daily command at 00:05 in the app timezone adds the next day to that rolling window, so passengers can book recurring rides several days ahead:
 
 ```bash
 php artisan schedule:list
@@ -232,10 +232,10 @@ This confirms Laravel has registered the 00:05 job. To run it automatically on a
 * * * * * cd /path/to/lawen-wasel/backend && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-To check generation without changing your local database, run the focused test below. It creates a temporary test database, seeds recurring templates, runs the command twice, and checks that exactly one ride per direction is created for today:
+To check generation without changing your local database, run the focused test below. It creates a temporary test database and checks the seven-day window, repeated runs, and the next day's extension:
 
 ```bash
-php artisan test --filter="showcase recurring templates generate one ride per direction for a scheduled day"
+php artisan test --filter="recurring templates keep seven days of rides available without duplicates"
 ```
 
 You can also run `php artisan app:generate-daily-rides` manually, but that writes rides to the currently configured database.
@@ -298,12 +298,12 @@ The migrations in `backend/database/migrations` are the source of truth for the 
 
 - **Service Layer**: `LocationService` (geocoding, route optimization) and `BookingStopService` (pickup/drop-off direction)
 - **Middleware Authentication**: `driver`, `driver-verified`, and `passenger` API middleware; an `admin` auth guard with `admin-active` and `super-admin` middleware for the panel
-- **Eloquent Relationships**: `hasManyThrough` for driver → vehicle → ride ownership chains; many-to-many for location groups
+- **Ride Data Model**: Ride groups connect a driver and location group to one or more rides. Bookings link passengers to rides, with nodes recording their pickup and drop-off points.
 - **Database Transactions**: Booking/ride creation wraps multi-table writes in transactions with row locking on seat counts
 
 ### Key Algorithms
 
-- **Ride Matching**: Time-window filtering (±1 hour) plus institution/city matching
+- **Ride Matching**: Resolve pickup coordinates to a supported city, then filter pending rides by pickup area, institution, seats, and a ±1 hour time window
 - **Route Optimization**: Shipment-based routing via the OpenRouteService optimization API
 - **Conflict Detection**: Prevents a passenger from double-booking overlapping rides
 - **Seat Tracking**: `available_seats`/`booked_seats` kept in sync via transactional increments/decrements
@@ -320,33 +320,37 @@ The migrations in `backend/database/migrations` are the source of truth for the 
 
 ## 📂 Project Structure
 
-The paths below are relative to `backend/`.
+The repository root contains the public documentation; the Laravel application lives in `backend/`. This shows the main directories and entry points:
 
 ```
-app/
-├── Http/
-│   ├── Controllers/
-│   │   ├── Api/              # API Controllers
-│   │   └── Admin/            # Admin Panel Controllers
-│   └── Middleware/           # Custom Middleware
-├── Livewire/                 # Admin panel Livewire components
-├── Models/                   # Eloquent Models
-├── Services/                 # Business Logic Services
-├── Policies/                 # Authorization policies
-└── Mail/                     # Email Templates
-
-database/
-├── migrations/               # Database Migrations
-├── seeders/                  # Database Seeders
-└── factories/                # Model Factories
-
-routes/
-├── api.php                   # API Routes
-├── web.php                   # Admin Panel Routes
-└── console.php                # Scheduled commands
-
-resources/
-└── views/                    # Blade Templates (Admin Panel)
+lawen-wasel/
+├── README.md                 # Project overview and setup
+├── docs/
+│   ├── API-docs.md           # API reference
+│   └── screenshots/          # Admin panel screenshots
+└── backend/
+    ├── app/
+    │   ├── Console/Commands/ # Scheduled ride generation
+    │   ├── Http/             # Admin/API controllers and middleware
+    │   ├── Livewire/         # Admin tables
+    │   ├── Mail/             # Verification and reset emails
+    │   ├── Models/           # Eloquent models
+    │   ├── Policies/         # Authorization rules
+    │   └── Services/         # Booking, location, and ride logic
+    ├── config/               # Laravel configuration
+    ├── database/
+    │   ├── factories/
+    │   ├── migrations/
+    │   └── seeders/          # Demo data and location CSV
+    ├── public/               # Web entry point
+    ├── resources/            # CSS, JavaScript, SVG logo, and Blade views
+    ├── routes/               # api.php, web.php, console.php
+    ├── storage/app/public/   # Bundled demo illustrations; uploads are ignored
+    ├── tests/                # Feature tests
+    ├── artisan
+    ├── composer.json
+    ├── package.json
+    └── serve-fast.ps1        # Optional Windows development server
 ```
 
 ## 🧪 Running Tests
@@ -355,4 +359,18 @@ resources/
 php artisan test
 ```
 
-The feature tests cover admin account changes, super admin permissions, disabled sessions, admin pages and pagination, showcase seed data, route checkpoints, driver ride-request access and acceptance, and multiple offers on a passenger request. Broader API coverage is still needed.
+The feature tests cover admin access and pagination, showcase seed data, route checkpoints, ride search, driver ride-request access, recurring rides, and private driver license access. Broader API coverage is still needed.
+
+## Future work / TODO
+
+Current limitations and planned improvements:
+
+- Make booking cancellation safe to repeat and safe under concurrency. Currently `PassengerRideController::cancelBooking()` does not require an active booking or lock the ride before returning seats.
+- Complete request/offer state transitions inside transactions, including parent-request acceptance, competing-offer expiry, and locked pending-state checks. Current offer acceptance updates the selected offer but leaves its parent request and competing offers unchanged.
+- Check driver ownership of vehicles used in recurring templates. Current template validation checks vehicle existence only. Also recheck capacity and seat counters when changing a ride's vehicle.
+- Replace the fixed direct-request booking price of 100 with an explicit pricing policy; document currency, per-leg pricing, cancellation rules, and offer semantics. Those product rules are not yet settled.
+- Refine recurring generation when templates are edited or disabled: existing future rides are not automatically rescheduled or withdrawn. The app currently uses UTC; select an explicit operating timezone before deployment.
+- Refine pickup geography beyond the nearest supported city center within 10 km. Current request-conflict checks compare scheduled minutes and daily rules rather than ride-duration overlap.
+- Harden password-reset verification/session binding, code expiry/resend behavior, registration transactions, admin-login throttling, and API token lifecycle.
+- Verify the new relationship constraints on MySQL/PostgreSQL before using those database engines. SQLite migration, rollback, existing-data integrity, and application tests pass locally.
+- Add meaningful local tests for cancellation, pricing, template ownership/activation, multiple daily schedules, search, password reset and concurrent seat accounting; record results before claiming readiness.

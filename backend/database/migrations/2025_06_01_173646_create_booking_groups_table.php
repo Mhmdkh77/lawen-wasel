@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    public $withinTransaction = false;
     /**
      * Run the migrations.
      */
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('bookings_group');
+        Schema::withoutForeignKeyConstraints(fn () => Schema::dropIfExists('booking_groups'));
     }
 };

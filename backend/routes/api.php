@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // User
     Route::controller(UserController::class)->group(function () {
         Route::post("/user",  "getUser");
+        Route::get('/user/driver-license', 'driverLicense')->name('api.user.driver-license');
         Route::put("/user",  "updateUser");
         // Route::post('/user/location', 'updateLocation');
         Route::post('/user/change-password',  'changePass');
@@ -65,9 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::controller(RideTemplateGroupController::class)->prefix('ride-template-groups')->group(function () {
                 Route::get('/', 'index');
                 Route::post('/',  'store');
-                Route::get('/{RideTemplateGroup}',  'show');
-                Route::put('/{RideTemplateGroup}',  'update');
-                Route::delete('/{RideTemplateGroup}',  'destroy');
+                Route::get('/{rideTemplateGroup}',  'show');
+                Route::put('/{rideTemplateGroup}',  'update');
+                Route::delete('/{rideTemplateGroup}',  'destroy');
             });
 
             Route::controller(DriverRideController::class)->group(function () {

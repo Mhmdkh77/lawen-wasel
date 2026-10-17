@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Models\{RideTemplateGroup, RideTemplate, LocationGroup, LocationGroupLocationRel, Ride, RideGroup, Vehicle};
+use App\Models\{RideTemplateGroup, RideTemplate, LocationGroup, LocationGroupLocationRel};
+use App\Services\RecurringRideGenerator;
 
 class RideTemplateGroupController extends Controller
 {
@@ -17,7 +18,7 @@ class RideTemplateGroupController extends Controller
             'groups' => $request->user()->driver?->rideTemplateGroups ?? [],
         ]);
     }
-    public function store(Request $request)
+    public function store(Request $request, RecurringRideGenerator $generator)
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -33,7 +34,7 @@ class RideTemplateGroupController extends Controller
 
         $driver = $request->user()->driver;
 
-        DB::transaction(function () use ($request, $driver) {
+        DB::transaction(function () use ($request, $driver, $generator) {
             $locationGroup = LocationGroup::create();
 
             foreach ($request->locations as $loc) {
@@ -52,7 +53,7 @@ class RideTemplateGroupController extends Controller
             ]);
 
             foreach ($request->ride_templates as $template) {
-                $rideTemplate = RideTemplate::create([
+                RideTemplate::create([
                     'vehicle_id' => $template['vehicle_id'],
                     'ride_template_group_id' => $templateGroup->id,
                     'scheduled_time' => $template['scheduled_time'],
@@ -60,33 +61,9 @@ class RideTemplateGroupController extends Controller
                     'type' => $template['type'],
                 ]);
 
-                $vehicle = Vehicle::find($rideTemplate->vehicle_id);
-
-                $startOfWeek = now()->startOfWeek();
-                foreach (range(0, 6) as $i) {
-                    $date = $startOfWeek->copy()->addDays($i);
-                    $dayName = strtolower($date->format('l'));
-
-                    if ($date->lt(now()->startOfDay())) {
-                        continue;
-                    }
-
-                    if (in_array($dayName, $rideTemplate->recurring_days ?? [])) {
-                        $rideGroup = RideGroup::create([
-                            'driver_id' => $driver->id,
-                            'location_group_id' => $templateGroup->location_group_id,
-                        ]);
-
-                        Ride::create([
-                            'vehicle_id' => $rideTemplate->vehicle_id,
-                            'ride_group_id' => $rideGroup->id,
-                            'scheduled_time' => $date->copy()->setTimeFromTimeString($rideTemplate->scheduled_time),
-                            'type' => $rideTemplate->type,
-                            'available_seats' => $vehicle->capacity,
-                        ]);
-                    }
-                }
             }
+
+            $generator->generate($templateGroup);
         });
 
         return response()->json(['message' => 'Ride template group created successfully']);
@@ -187,17 +164,20 @@ class RideTemplateGroupController extends Controller
         $this->authorize('rud', $rideTemplateGroup);
 
         DB::transaction(function () use ($rideTemplateGroup) {
+            $locationGroup = $rideTemplateGroup->locationGroup;
+
             // Delete all related ride templates
             $rideTemplateGroup->rideTemplates()->delete();
 
-            // Delete related location group relations
-            $rideTemplateGroup->locationGroup->locationGroupLocationRels()->delete();
-
-            // Delete the location group itself
-            $rideTemplateGroup->locationGroup()->delete();
-
-            // Finally, delete the ride template group
             $rideTemplateGroup->delete();
+
+            // Generated rides may still use this location group through a ride group.
+            // Keep their stops and route history when removing the template group.
+            if (! DB::table('ride_groups')->where('location_group_id', $locationGroup->id)->exists()
+                && ! RideTemplateGroup::where('location_group_id', $locationGroup->id)->exists()) {
+                $locationGroup->locationGroupLocationRels()->delete();
+                $locationGroup->delete();
+            }
         });
 
         return response()->json(['message' => 'Ride template group deleted successfully']);

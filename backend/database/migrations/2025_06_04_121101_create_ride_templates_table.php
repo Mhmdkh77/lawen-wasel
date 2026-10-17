@@ -35,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ride_template');
+        Schema::dropIfExists('ride_templates');
     }
 };

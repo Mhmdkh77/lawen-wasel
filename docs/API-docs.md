@@ -36,9 +36,12 @@ Registration verifies email. A phone number is collected, but there is no phone-
 | --- | --- | --- |
 | POST | `/user` | Get the current user profile |
 | PUT | `/user` | Update supported profile fields and uploads |
+| GET | `/user/driver-license` | Return the authenticated driver's private license document; requires a bearer token |
 | POST | `/user/change-password` | Change password using `current_password`, `new_password`, and `new_password_confirmation` |
 | POST | `/user/logout` | Revoke the user's tokens |
 | GET | `/locations` | List locations |
+
+Admin users view a driver's license through the session-protected `/admin/drivers/{user}/license` route. Existing uploaded licenses are moved out of public storage by the privacy migration; bundled demo illustrations remain public.
 
 ### Passenger routes
 
@@ -61,6 +64,8 @@ All paths below start with `/passenger` and require a passenger account.
 | GET | `/bookings/{booking}` | View a booking |
 | PATCH | `/bookings/{booking}/cencel` | Cancel a booking; `cencel` is the current route spelling |
 
+Ride search resolves the supplied pickup coordinates to the nearest supported city center within 10 km. It returns pending rides serving that city (or a station linked to it), the requested institution, time window, and seat count. Coordinates outside that area receive HTTP 422. This is an approximate city match, not a distance check against every pickup stop.
+
 Station and institution records are available through `GET /locations`; there are no separate passenger station endpoints.
 
 ### Driver routes
@@ -70,9 +75,9 @@ All paths below start with `/driver` and require a driver account. Ride, request
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET, POST | `/vehicles` | List or create vehicles |
-| GET, PUT, DELETE | `/vehicles/{vehicle}` | View, update, or delete a vehicle |
-| GET, POST | `/ride-template-groups` | List or create recurring template groups |
-| GET, PUT, DELETE | `/ride-template-groups/{RideTemplateGroup}` | View, update, or delete a template group |
+| GET, PUT, DELETE | `/vehicles/{vehicle}` | View or update a vehicle; deletion returns HTTP 409 while rides or templates reference it |
+| GET, POST | `/ride-template-groups` | List or create recurring template groups; creation generates rides for the next seven days |
+| GET, PUT, DELETE | `/ride-template-groups/{rideTemplateGroup}` | View, update, or delete a template group; historical ride routes are retained |
 | GET | `/ride-requests` | List incoming requests |
 | GET | `/ride-requests/{rideRequest}` | View a request |
 | PATCH | `/ride-requests/{rideRequest}/accept` | Accept a request |
